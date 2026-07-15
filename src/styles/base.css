@@ -2370,7 +2370,22 @@ textarea.input {
   color: var(--muted);
   border: 2px solid var(--hairline);
   flex: none;
+  position: relative;
+  overflow: hidden;
   transition: background 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+/* A low-opacity white "film" over the whole latch, brightest just off-center
+   and fading toward the rim — reads as light diffusing through frosted glass
+   rather than a flat color swap, especially on top of the flashred/flashblue
+   states below. Present in every state (default, flashing, open) for a
+   consistent frosted look, not just while strobing. */
+.lockgate__lock::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.15) 60%, transparent 85%);
+  pointer-events: none;
 }
 .lockgate__lock:active {
   transform: scale(0.92);

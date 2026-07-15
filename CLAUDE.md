@@ -219,12 +219,16 @@ key prefix) copies.
   button + haptic-buzzes instead of silently doing nothing. Not real security, just
   deliberate friction so "start a new sheet" / "erase everything" survive a misplaced
   tap. Unlocking a latch bursts a small CSS-only confetti burst. While still locked,
-  each latch strobes red/white like a police light — driven by `setTimeout` with a
+  each latch strobes red/blue like a police light — driven by `setTimeout` with a
   RANDOMIZED delay each tick (not a CSS `@keyframes` loop), so the flash sequence
   never settles into an exact repeating rhythm the way a fixed-duration CSS animation
   always eventually does; stops the instant that latch opens. Colors are fixed hex,
   not theme tokens, on purpose — a warning strobe should look the same in light/dark/
-  gallery mode. `SettingsScreen.tsx`'s "Start over" button also nests its own
+  gallery mode. Tuned same day per feedback: first pass was red/white and 90-320ms
+  (too fast, no blue) — now red/blue at 280-650ms, plus a low-opacity white
+  radial-gradient "film" (`::after` on `.lockgate__lock`, every state) so it reads as
+  light diffusing through frosted glass, not a flat color swap. `SettingsScreen.tsx`'s
+  "Start over" button also nests its own
   `confirmDialog()` call inside `onConfirm` — belt and suspenders, two latches AND a
   themed confirm for the single highest-stakes action. See TrackerA's CLAUDE.md
   (Owner preferences) for the fuller writeup; ported identically to TrackerB the same
