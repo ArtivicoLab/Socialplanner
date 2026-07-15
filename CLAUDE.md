@@ -112,8 +112,10 @@ Connect. **Flagged 2026-07-15: it had zero brute-force protection** —
 `isValidAccessCode()` is a synchronous local function with no network
 round-trip, so anyone with devtools open could call it directly, unlimited
 times, instantly. Added `tryUnlock()` (same file) as an honest, not
-bulletproof, speed bump: an escalating lockout (5 free attempts, then 30s,
-1min, 2min... capped at 15min) after wrong guesses made through the real UI,
+bulletproof, speed bump: an escalating lockout after wrong guesses made
+through the real UI — attempts 1-5 free (real buyers mistype), attempt 6 a
+flat 30s, then attempt 7 on a much harder exponential wall in HOURS (1h, 2h,
+4h, 8h, 16h...) capped at 24h so a genuine buyer isn't locked out for good —
 persisted to BOTH `localStorage` and IndexedDB's `kv` store (`db.ts`) so a
 plain refresh, or clearing just one of the two, doesn't hand back a free
 reset — whichever storage shows the more restrictive state wins, and both are
@@ -133,7 +135,9 @@ If real license enforcement ever matters more than it does today, that needs
 an actual backend endpoint to check codes against, which is a deliberate
 architecture change, not a patch to this file — don't reach for it without
 discussing the trade-off first, since it contradicts the static-hosting-only
-principle above.
+principle above. Ported identically to TrackerA and TrackerB the same day —
+see their own CLAUDE.md for their (identical logic, different localStorage
+key prefix) copies.
 
 ## Owner preferences (learned — honor these)
 - **Audience is ~99% women** — design for her. Theme is a clean white/black

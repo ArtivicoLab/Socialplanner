@@ -269,17 +269,20 @@
   color-scheme: dark;
 
   --cat-pink: #e0703f; /* Rust Bloom (Promotion) — the chair, brightened */
-  --cat-teal: #4f8f6a; /* Forest Jade (Education) */
+  /* NOT green: --bg/--surface are already pine green, so a green swatch here
+     fights its own background/sidebar everywhere it shows up (nav icons,
+     legend dots) — confirmed 2026-07-15, looked "green on green". */
+  --cat-teal: #4a3626; /* Espresso Wood (Education) — a warm dark coffee-brown */
   --cat-lavender: #9a6a8f; /* Dusk Plum (Entertainment) */
   --cat-butter: #d9ac5c; /* Ochre Gold (Quote) */
   --cat-sky: #e0b98c; /* Portrait Skin (Lifestyle) */
-  --cat-mint: #3f9c7a;
+  --cat-mint: #4a6a8a; /* Slate Denim — was also green, same reason as cat-teal */
   --cat-rose: #c9765f;
   --cat-gold: #b8863f;
   --cat-plum: #7a4f70;
   --cat-steel: #6b5f52;
   --cat-clay: #a8502e;
-  --cat-cyan: #2f6358;
+  --cat-cyan: #3d2a35; /* Aubergine Shadow — was also green, same reason as cat-teal */
   --cat-crimson: #8f2a1e;
   --cat-cream: #efe2c9; /* the sweater's cream stripes */
   --cat-charcoal: #241c15; /* the hair */

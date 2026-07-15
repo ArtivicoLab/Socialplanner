@@ -21,7 +21,9 @@ function formatWait(ms: number): string {
   const s = Math.ceil(ms / 1000);
   if (s < 60) return `${s}s`;
   const m = Math.ceil(s / 60);
-  return `${m} minute${m === 1 ? "" : "s"}`;
+  if (m < 60) return `${m} minute${m === 1 ? "" : "s"}`;
+  const h = Math.ceil(m / 60);
+  return `${h} hour${h === 1 ? "" : "s"}`;
 }
 
 export function SettingsScreen() {

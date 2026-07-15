@@ -93,10 +93,14 @@ async function reconciledThrottle(): Promise<ThrottleState> {
   return merged;
 }
 
+// Attempts 1-5: free. Attempt 6: a flat 30s speed bump. Attempt 7 on: a much
+// harder exponential wall in HOURS (1h, 2h, 4h, 8h...), capped at MAX_LOCK_MS
+// — deliberately a big jump from 6->7, not a continuation of the same curve.
 function lockDurationMs(failCount: number): number {
   if (failCount <= FREE_ATTEMPTS) return 0;
-  const over = failCount - FREE_ATTEMPTS;
-  return Math.min(MAX_LOCK_MS, BASE_LOCK_MS * 2 ** (over - 1));
+  if (failCount === FREE_ATTEMPTS + 1) return FIRST_LOCK_MS;
+  const over = failCount - (FREE_ATTEMPTS + 2); // attempt 7 -> over = 0
+  return Math.min(MAX_LOCK_MS, HOUR_MS * 2 ** over);
 }
 
 export interface UnlockResult {
