@@ -5,6 +5,7 @@ import { HelpTip } from "../../components/HelpTip";
 import { IconChevronDown, IconChevronUp, IconClose } from "../../components/icons";
 import { useSettings } from "../../stores/useSettings";
 import { useSync } from "../../stores/useSync";
+import { confirmDialog } from "../../stores/useConfirm";
 import { activate, resetEverything, resetForNewYear, setDemoMode } from "../../stores/bootstrap";
 import { currentLockoutMs, tryUnlock } from "../../lib/access";
 import { isDemo } from "../../lib/demo";
@@ -31,8 +32,10 @@ export function SettingsScreen() {
     name, theme, weekStart, hiddenRoutes, categories, categoryColors, goals,
     tabBarRoutes, activated, accessCode, update,
   } = useSettings();
-  const { connected, spreadsheetId, hasClientId, busy, error, connect, relink, disconnect, syncNow } =
-    useSync();
+  const {
+    connected, spreadsheetId, previousSpreadsheetId, hasClientId, busy, error, wrongAccount,
+    connect, relink, disconnect, syncNow, useThisAccountInstead, startNewSheet,
+  } = useSync();
   const platforms = usePlatforms((s) => s.items);
   const addPlatform = usePlatforms((s) => s.add);
   const updatePlatform = usePlatforms((s) => s.update);
@@ -54,6 +57,8 @@ export function SettingsScreen() {
   const [relinkError, setRelinkError] = useState("");
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [demoOn, setDemoOn] = useState(isDemo());
+  const [startingNewSheet, setStartingNewSheet] = useState(false);
+  const [newSheetError, setNewSheetError] = useState("");
 
   const orderedPlatforms = [...platforms].sort((a, b) => a.order - b.order);
 
@@ -114,6 +119,25 @@ export function SettingsScreen() {
     const ok = await relink(relinkInput.trim());
     if (ok) { setRelinkOpen(false); setRelinkInput(""); }
     else setRelinkError(error || "Couldn't link that sheet. Check the link and try again.");
+  }
+
+  async function handleStartNewSheet() {
+    const ok = await confirmDialog({
+      title: "Start a brand new sheet?",
+      message:
+        "This links a fresh, empty Google Sheet and pushes everything currently on this device into it. Your old sheet isn't deleted, it stays in your Drive exactly as it is, just no longer linked here.",
+      confirmLabel: "Start new sheet",
+      danger: true,
+    });
+    if (!ok) return;
+    setNewSheetError("");
+    setStartingNewSheet(true);
+    try {
+      await startNewSheet();
+    } finally {
+      setStartingNewSheet(false);
+    }
+    if (useSync.getState().error) setNewSheetError(useSync.getState().error);
   }
 
   // ---- Content pillars (categories) ----
@@ -227,7 +251,7 @@ export function SettingsScreen() {
         Demo mode
         <HelpTip text="Fills the whole app with a full year of realistic sample content so you can try everything before buying. It's display-only, and nothing here is saved to your device or your Google Sheet. Turn it off to use your own planner; connecting Google Sheets turns it off automatically." />
       </div>
-      <div className="card">
+      <div className="card" data-tour="settings-demo">
         <label className="field__label">Sample data</label>
         <Segmented
           options={[
@@ -333,9 +357,38 @@ export function SettingsScreen() {
             </button>
           </>
         )}
-        {error && (
-          <p className="neg settings-error">
-            {error}
+        {wrongAccount ? (
+          <div className="card settings-setup-note" style={{ marginTop: 10 }}>
+            <b>Wrong Google account.</b> The Google account you just signed in with
+            doesn't have access to the sheet this device is already linked to — most
+            likely your Social Planner data lives under a different Google account
+            (check your Drive for a "Social Planner" spreadsheet to see which one).
+            <div className="spread spread--gap8" style={{ marginTop: 10 }}>
+              <button className="btn btn--auto" disabled={busy} onClick={() => connect()}>
+                {busy ? "Trying…" : "Try signing in again"}
+              </button>
+              <button
+                className="btn btn--ghost btn--auto"
+                disabled={busy}
+                onClick={() => useThisAccountInstead()}
+              >
+                Use this account, start a new sheet
+              </button>
+            </div>
+          </div>
+        ) : (
+          error && (
+            <p className="neg settings-error">
+              {error}
+            </p>
+          )
+        )}
+        {previousSpreadsheetId && (
+          <p className="muted settings-hint--sm" style={{ marginTop: 10 }}>
+            Previously connected sheet still has everything on it —{" "}
+            <a href={spreadsheetUrl(previousSpreadsheetId)} target="_blank" rel="noreferrer">
+              open it to copy anything over ↗
+            </a>
           </p>
         )}
       </div>
@@ -344,7 +397,7 @@ export function SettingsScreen() {
         Help &amp; guide
         <HelpTip text="How to learn the app: replay the welcome tour, or tap the compass on any screen for a quick guide to just that screen." />
       </div>
-      <div className="card">
+      <div className="card" data-tour="settings-help">
         <p className="muted fs-13" style={{ marginTop: 0 }}>New here? A few ways to find your feet:</p>
         <ul className="help-list">
           <li>Tap the <strong>compass</strong> at the top of any screen to replay that screen's quick guide.</li>
@@ -358,7 +411,7 @@ export function SettingsScreen() {
       </div>
 
       <div className="section-title">Appearance</div>
-      <div className="card">
+      <div className="card" data-tour="settings-appearance">
         <label className="field__label">Theme</label>
         <Segmented
           options={[
@@ -378,7 +431,7 @@ export function SettingsScreen() {
       </div>
 
       <div className="section-title">Preferences</div>
-      <div className="card">
+      <div className="card" data-tour="settings-preferences">
         <div className="field">
           <label className="field__label" htmlFor="settings-name">Your name</label>
           <input
@@ -444,7 +497,7 @@ export function SettingsScreen() {
         Post goals
         <HelpTip text="The pickable goal list for a post (Sales, Follows, Likes, …). Add your own or remove the ones you never use." />
       </div>
-      <div className="card">
+      <div className="card" data-tour="settings-goals">
         {goals.length > 0 && (
           <div className="chip-wrap">
             {goals.map((g) => (
@@ -570,7 +623,7 @@ export function SettingsScreen() {
         narrow. On a wider screen the left sidebar shows everything instead, so
         this section changes nothing there.
       </p>
-      <div className="card card--tight">
+      <div className="card card--tight" data-tour="settings-tabbar">
         {tabBarRoutes.length === 0 && (
           <p className="muted settings-list-empty">
             No tabs added yet. The bottom bar will show only More.
@@ -630,7 +683,7 @@ export function SettingsScreen() {
       </div>
 
       <div className="section-title">Help &amp; contact</div>
-      <div className="card">
+      <div className="card" data-tour="settings-contact">
         <p className="muted settings-hint">
           Questions, ideas, or something not working? We'd love to hear from you.
         </p>
@@ -643,20 +696,47 @@ export function SettingsScreen() {
       </div>
 
       <div className="section-title section-title--alert">Danger zone</div>
-      <div className="card">
-        <button
-          className="btn btn--danger"
-          onClick={() => {
-            if (confirm("Delete all planner data on this device? This cannot be undone.")) {
-              void resetEverything();
-            }
-          }}
-        >
-          Start over (erase everything)
-        </button>
+      <div className="card" style={{ display: "flex", flexDirection: "column", gap: 16 }} data-tour="settings-danger">
+        {connected && (
+          <div data-tour="settings-newsheet">
+            <div className="settings-card-title">Start a new sheet</div>
+            <p className="muted settings-hint">
+              Link a brand new, empty Google Sheet instead of this one. Your current sheet
+              isn't deleted, it stays in your Drive untouched, just unlinked from the app.
+            </p>
+            <button
+              className="btn btn--danger"
+              disabled={startingNewSheet}
+              onClick={handleStartNewSheet}
+            >
+              {startingNewSheet ? "Starting…" : "Start a new sheet"}
+            </button>
+            {newSheetError && <p className="neg settings-error">{newSheetError}</p>}
+          </div>
+        )}
+        <div>
+          <div className="settings-card-title">Start over</div>
+          <p className="muted settings-hint">
+            Delete all planner data on this device. This cannot be undone.
+          </p>
+          <button
+            className="btn btn--danger"
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: "Delete all planner data?",
+                message: "This clears everything on this device. This cannot be undone.",
+                confirmLabel: "Delete everything",
+                danger: true,
+              });
+              if (ok) void resetEverything();
+            }}
+          >
+            Start over (erase everything)
+          </button>
+        </div>
       </div>
 
-      <div className="settings-footer">
+      <div className="settings-footer" data-tour="settings-footer">
         <button className="hero__name settings-footer__link" onClick={() => navigate("privacy")}>
           Privacy &amp; source
         </button>

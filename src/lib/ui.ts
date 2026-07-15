@@ -16,6 +16,12 @@ const FIXED: Record<string, string> = {
 // already claims — otherwise every custom pillar is guaranteed to hash onto a
 // color one of the 5 defaults already uses (5 buckets, 5 defaults = 100%
 // collision), making it visually indistinguishable from an existing pillar.
+// Deliberately NOT --cat-cream here (confirmed live 2026-07-15): it's a true
+// near-white, same as --surface in light mode, so a pillar silently
+// auto-hashed onto it renders as an invisible white-on-white chip. It's
+// still in PICKABLE_CATEGORY_COLORS below for a user to choose on purpose
+// (they can see the swatch before picking it) — just excluded from blind
+// hash-assignment.
 const EXTENDED_PASTELS = [
   "var(--cat-mint)",
   "var(--cat-rose)",
@@ -25,7 +31,6 @@ const EXTENDED_PASTELS = [
   "var(--cat-clay)",
   "var(--cat-cyan)",
   "var(--cat-crimson)",
-  "var(--cat-cream)",
   "var(--cat-charcoal)",
 ];
 

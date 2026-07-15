@@ -221,6 +221,91 @@ const STEPS: TourStep[] = [
     title: "Growth you can see",
     body: "Monthly bars and goal rings show whether you're on track. Log each month's numbers and the charts update instantly.",
   },
+  // ---------- Settings ----------
+  {
+    target: "settings-demo",
+    route: "settings",
+    title: "Try before you commit",
+    body: "Flip this to \"Demo on\" any time to explore the app full of realistic sample content, or back to \"My data\" to return to your own planner. Nothing you touch while Demo is on is ever saved to your device or your Sheet.",
+  },
+  {
+    target: "settings-sheets",
+    route: "settings",
+    title: "Your Google Sheet is the real backup",
+    body: "Enter your Etsy product code and tap Unlock, then Connect Google Sheets to create your spreadsheet: or tap \"Link a sheet from another device\" if you've already connected on your phone, no code needed. Once connected, use \"Open my sheet ↗\" to view the spreadsheet directly, \"Sync now\" to push changes immediately, or Disconnect to unlink (your sheet itself is never deleted).",
+  },
+  {
+    target: "settings-help",
+    route: "settings",
+    title: "Get familiar, any time",
+    body: "Tap the compass icon at the top of any screen to replay that screen's own quick guide, or tap \"Replay the welcome tour\" right here to see the full app introduction again from the start.",
+  },
+  {
+    target: "settings-appearance",
+    route: "settings",
+    title: "Pick your look",
+    body: "Auto follows your device's light or dark setting. Morning and Midnight lock in light or dark on purpose, and Gallery is an experimental art-inspired pine-green and terracotta theme. Switch any time: nothing else changes.",
+  },
+  {
+    target: "settings-preferences",
+    route: "settings",
+    title: "Your name and your week",
+    body: "Type your name in \"Your name\" and it shows up in the dashboard's greeting. \"Week starts on\" sets whether the Calendar and Monthly Plan grids begin each row on Sunday or Monday.",
+  },
+  {
+    target: "settings-categories",
+    route: "settings",
+    title: "Color-code your content",
+    body: "Tap a pillar's colored dot to open the color picker, tap its name to rename it right there, or tap the × to remove it. Type a new pillar in the box and tap Add (or press Enter) to create one.",
+  },
+  {
+    target: "settings-goals",
+    route: "settings",
+    title: "Your pickable goal list",
+    body: "This is the list a post's Goal field offers in the Scheduler, like Sales or Follows. Tap the × on any chip to remove one you never use, or add your own below.",
+  },
+  {
+    target: "settings-platforms",
+    route: "settings",
+    title: "Manage every channel",
+    body: "Use the ▲▼ chevron icons to reorder a platform, tap its name to rename it right there, flip the checkbox to switch it active or inactive without losing its history, or tap the × to delete it for good. Add a new one (up to 8) at the bottom.",
+  },
+  {
+    target: "settings-sections",
+    route: "settings",
+    title: "Declutter your navigation",
+    body: "Uncheck a module here to hide it from the sidebar and the More menu. Its data stays exactly where it is: this only changes what you see in navigation.",
+  },
+  {
+    target: "settings-tabbar",
+    route: "settings",
+    title: "Customize your phone's bottom bar",
+    body: "Tap any icon chip in the \"tap to add\" list below to pin it as a shortcut here, tap the × on a pinned row to unpin it, and press-and-hold any icon on the actual bottom bar to drag it into a new order. This only affects phones and narrow windows: your desktop sidebar always shows everything regardless.",
+  },
+  {
+    target: "settings-yearreset",
+    route: "settings",
+    title: "A clean slate for a new year",
+    body: "Tap \"Start a fresh year\" to choose exactly what to clear: scheduled posts, the performance log, or both. Your hashtag groups, idea bank, platforms, pillars and every other setting stay untouched, and nothing is deleted until you confirm in the sheet that opens.",
+  },
+  {
+    target: "settings-contact",
+    route: "settings",
+    title: "We're one email away",
+    body: "Tap \"Contact us\" to open your email app with our address and subject line already filled in: questions, bugs, feature ideas, anything at all.",
+  },
+  {
+    target: "settings-danger",
+    route: "settings",
+    title: "The one irreversible button",
+    body: "\"Start over (erase everything)\" wipes every post, idea, hashtag group and setting on this device for good, after one confirmation. If you're connected to Google Sheets, disconnect first in the Google Sheets card above, or you'll lose your only backup too.",
+  },
+  {
+    target: "settings-footer",
+    route: "settings",
+    title: "Version, updates, and the fine print",
+    body: "This version number always reflects exactly what's deployed. Tap \"Check for updates\" any time to grab the latest build, and \"Privacy & source\" links to the privacy policy and the app's own source code.",
+  },
 ];
 
 export function hasSeenTour(): boolean {

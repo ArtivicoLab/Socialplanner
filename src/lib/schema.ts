@@ -5,14 +5,27 @@
 
 import type { HashtagGroup, Highlight, Idea, MonthlyGoal, MoodBoardPin, PerfEntry, Platform, Post, Tombstone } from "./types";
 
-export const SPREADSHEET_TITLE = "Social Planner Data (app-managed)";
+export const SPREADSHEET_TITLE = "Social Planner";
 export const SCHEMA_VERSION = 1;
 
+// Tab titles match the app's own nav labels where there's a 1:1 screen (so a
+// buyer who opens their Sheet sees the same names they see in the app) —
+// confirmed mismatched 2026-07-15 (tabs were still named after the internal
+// TS types: Posts/HashtagGroups/Ideas, not "Scheduler"/"Hashtags"/"Idea
+// Bank"). Platforms/Performance/Highlights/MoodBoard/MonthlyGoals/
+// Tombstones/Meta are left as-is — they either already match, or (Mood
+// board/Monthly goals/Tombstones/Meta) don't correspond 1:1 to a single nav
+// screen, or are internal-only and never meant to be read by a user.
+// Renaming a value here on an ALREADY-CONNECTED sheet does not by itself
+// rename the live tab — see sync.ts's migrateLegacyTabNames, which must
+// list the OLD value here as a `from` before you change it, or an existing
+// user's tab gets orphaned (ensureTabs only adds missing tabs, it doesn't
+// rename existing ones).
 export const TAB = {
   Meta: "Meta",
-  Posts: "Posts",
-  HashtagGroups: "HashtagGroups",
-  Ideas: "Ideas",
+  Posts: "Scheduler",
+  HashtagGroups: "Hashtags",
+  Ideas: "Idea Bank",
   Platforms: "Platforms",
   Performance: "Performance",
   Highlights: "Highlights",

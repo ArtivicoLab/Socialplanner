@@ -5,8 +5,11 @@
       system, components, hash router, demo mode, coach tour machinery).
 - [x] Identity: name "Social Planner", port 5512, DB `socialplanner` v1,
       manifest / index.html / sw cache / CNAME.
-- [x] Theme "Cloud Studio" (light) / "Studio Night" (dark) — periwinkle
-      indigo + raspberry on lilac-white paper.
+- [x] Theme: clean white/black chrome, TikTok/YouTube red-pink accent + deep
+      cyan-teal secondary (retheme attempts tried and reverted 2026-07-15 —
+      see tokens.css's top comment for the current, real palette). A 4th
+      opt-in "Gallery" theme (art-inspired, from a reference painting) was
+      added alongside it.
 - [x] Domain layer: Post / HashtagGroup / Idea / Platform / PerfEntry /
       Highlight types, schema tabs + serializers, db collections, crud
       stores, bootstrap (default 8 platforms for real users), sync wiring.
@@ -62,9 +65,40 @@
         against current local state, which protects un-pushed edits via a
         different mechanism than push-first. See CLAUDE.md for the caveat
         (reasoned through, not battle-tested against a real conflict yet).
+  - [x] ~~Settings (name, weekStart, content pillars + their colors, post
+        goals) never reached the Sheet at all — only `accessCode` did, via
+        the Meta tab. A pillar renamed/recolored, or a goal added, on one
+        device silently never showed up after switching devices.~~ — **fixed
+        2026-07-15**: those 5 fields now round-trip through the same Meta
+        key/value tab (JSON-encoded for the array/object ones), gated by a
+        new `Settings.updatedAt` so pull() applies last-write-wins the same
+        way every row-based collection already does. `theme`/`hiddenRoutes`/
+        `tabBarRoutes`/`accessCode`/onboarding flags stay local-device-only
+        on purpose. See `lib/sync.ts`'s `pushSettingsMeta`/`applySettingsMeta`.
+        Caveat: like every other collection, this only pulls on an explicit
+        connect/relink, not automatically in the background — see the
+        reauth/retry item below, this app has no periodic pull yet at all.
+  - [x] ~~`relink()` — never checked whether it left demo mode before
+        pulling~~ — **fixed 2026-07-15**: it didn't (same bug TrackerA had
+        already fixed), so a brand-new device's `relink()` pulled real data
+        that only showed for that session and silently reverted to the demo
+        sample on reload. Now mirrors `connect()`'s existing guard. See
+        CLAUDE.md's "Google Sheet as database" section.
+  - [x] ~~No way to abandon the connected sheet and start a fresh one; a
+        wrong-Google-account error surfaced as a raw, un-actionable error
+        string~~ — **added 2026-07-15**: ported TrackerA's `startNewSheet()` +
+        wrong-account recovery (`useThisAccountInstead()`), the only one of
+        the three trackers that had this — TrackerB doesn't either. See
+        CLAUDE.md for the full writeup, incl. a `SPREADSHEET_TITLE` naming
+        bug found the same way (fixed here; **same bug still open in
+        TrackerB**, not touched).
   - [ ] `window.confirm()` still used in `CalendarScreen.tsx`, `PostSheet.tsx`,
-        `HashtagsScreen.tsx` — must be `confirmDialog()` instead (native
-        popups can't be themed and look broken on an installed PWA).
+        `HashtagsScreen.tsx`, and (found 2026-07-15, this list was
+        incomplete) `SettingsScreen.tsx`'s `deletePlatform` — must be
+        `confirmDialog()` instead (native popups can't be themed and look
+        broken on an installed PWA). SettingsScreen's OWN danger-zone buttons
+        were fixed 2026-07-15 while touching that file for the item above;
+        `deletePlatform`'s is not, since it wasn't part of that change.
   - [ ] Dirty-tab tracking (`syncDirty.ts`) is in-memory only — a reload
         before a push completes silently drops the pending push behind a
         falsely-confident "Synced" status.

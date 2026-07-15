@@ -165,6 +165,12 @@ export interface Settings {
   activated: boolean; // true once a valid accessCode was entered — unlocks Google Sheets connect
   hideAtsHint?: boolean;
   tourDone?: boolean;
+  // ISO timestamp, bumped whenever a Sheet-synced field changes (name,
+  // weekStart, categories, categoryColors, goals — see sync.ts's
+  // pushSettingsMeta/pullSettingsMeta) — lets pull() apply last-write-wins
+  // the same way every other collection already does, instead of a synced
+  // Settings field always losing to whichever device pulls last.
+  updatedAt: string;
 }
 
 // Default content pillars — the 5 FIXED swatches in lib/ui.ts map onto these.

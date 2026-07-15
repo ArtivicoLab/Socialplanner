@@ -13,6 +13,34 @@ unwanted production deploy. Build, typecheck, and test freely; leave the
 working tree uncommitted for the user to review and push themselves. Being
 asked to commit once does not carry over to later turns — ask again each time.
 
+**CONFIRMED, 2026-07-15: a push landing mid-agent-edit shipped a broken
+build — exactly the risk above, materialized.** An agent was mid-way through
+a multi-step rename in `src/lib/access.ts` (`BASE_LOCK_MS` →
+`FIRST_LOCK_MS`/`HOUR_MS`) — one edit had already renamed the constant
+declarations, a second edit (renaming the function body that used it) hadn't
+landed yet. A commit+push happened in that exact narrow window, shipping a
+file that was internally inconsistent. GitHub Actions' `build` job caught it
+immediately and correctly (`tsc -b` failing with `Cannot find name
+'BASE_LOCK_MS'`, `deploy` never even ran) — the CI pipeline did exactly its
+job here, this was not a pipeline bug, and without a typecheck step this
+class of mistake would have shipped silently broken JS instead of failing
+loudly with an exact file/line. **The fix was never to debug `deploy.yml` or
+Pages settings** (see "Deploy" below — a DIFFERENT failure mode that can look
+similar from a "run failed" email alone) — it was to notice the on-disk
+working tree already had the finished, consistent edit (`git status` still
+showed the file as "modified" against the broken commit), re-verify it
+locally (`tsc --noEmit` + `npm run build` + tests, all clean), and commit+push
+that as a new commit superseding the broken one. **General rule: if a deploy
+fails on a build/typecheck error right after a multi-step edit was in
+progress, check the current working tree against the broken commit before
+assuming the logic itself is wrong** — the fix might just be "finish
+committing what's already correct on disk," not a code change. Also: run
+`tsc --noEmit` immediately before `git commit`, not just after finishing an
+edit — it's the cheapest way to catch an accidentally-mid-edit snapshot
+before it ships, rather than waiting for CI to catch it several minutes
+later. Same underlying risk applies to TrackerA and TrackerB — same fix if it
+recurs there.
+
 ## Deploy — GitHub Pages needs a one-time manual enable
 `.github/workflows/deploy.yml` builds and deploys to GitHub Pages on every
 push to `main`. A **brand-new repo's very first run still fails** even though
@@ -229,7 +257,13 @@ tests/              schema / merge / tombstones (+ any new pure-logic tests)
 ## Google Sheet as database
 - `schema.ts` defines every tab + column order. Row 1 is an app-written header.
 - Tabs: Posts, HashtagGroups, Ideas, Platforms, Performance, Highlights,
-  Tombstones, Meta (key/value; carries the Etsy access code across devices).
+  Tombstones, Meta (key/value; carries the Etsy access code, and — as of
+  2026-07-15 — `name`/`weekStart`/`categories`/`categoryColors`/`goals`,
+  gated by a `settingsUpdatedAt` key so pull() can last-write-wins them the
+  same way every row-based tab already merges by `updatedAt`; see
+  `lib/sync.ts`'s `pushSettingsMeta`/`applySettingsMeta`. Everything else in
+  `Settings` — theme, hiddenRoutes, tabBarRoutes, onboarding flags — stays
+  local-device-only on purpose, not synced).
 - Records keyed by `id` (col A, nanoid) — NEVER by row position. Tolerate
   extra user columns, reordered/blank rows.
 - Sync: pull = batchGet all tabs → row-granular merge by `updatedAt` +
@@ -273,6 +307,36 @@ tests/              schema / merge / tombstones (+ any new pure-logic tests)
   legitimately ran past 45s while carefully reading Google's "unverified app" warning and
   still completed successfully, so 45s was tightened to punish exactly the careful
   behavior that warning asks for).
+- **ADDED 2026-07-15 — "start a new sheet" + wrong-account recovery, ported from TrackerA
+  (the only one of the three trackers that had this; TrackerB doesn't either).** Before this,
+  an already-connected user had no way to abandon their current sheet and link a fresh one
+  except by accident via a permission error, and a `SheetPermissionDeniedError` from
+  `connect()` (the signed-in Google account doesn't own the remembered sheet — wrong account
+  picked, or a genuine switch) surfaced as a raw, un-actionable error string with no recovery
+  path. `connect()`'s error handling already propagated `SheetPermissionDeniedError` distinctly
+  from `SheetNotFoundError` (see below) — only the UI/state layer on top was missing. Added,
+  matching TrackerA's shape exactly: `LS_PREVIOUS_ID` (`sp.previousSpreadsheetId`),
+  `abandonRememberedSheet()`/`getPreviousSpreadsheetId()`, and `createNewSheet()` in
+  `sync.ts` — the latter gets a fresh token and creates the new sheet FIRST, only abandoning
+  the old one once the new one is confirmed reachable (same ordering TrackerA's own doc
+  comment explains: abandoning first, then failing to create the new one, would leave a user
+  silently disconnected from everything). `useSync.ts` gained `wrongAccount`/
+  `previousSpreadsheetId` state and `useThisAccountInstead()`/`startNewSheet()` actions.
+  `SettingsScreen.tsx` gained a wrong-account recovery card (in place of the raw error string),
+  a "previously connected sheet" link when one was abandoned, and a "Start a new sheet" button
+  in the Danger Zone (via `confirmDialog`, not `window.confirm()` — see Owner preferences).
+  Deliberately did NOT port TrackerA's `LockGatedButton` two-latch friction UI for this button —
+  a single `confirmDialog` matches the friction level TrackerC's own "Start over" danger button
+  already uses; that's a separate UI-polish feature, not part of this ask. **Also found and
+  fixed while auditing this — a rule worth stating explicitly since it wasn't written down
+  anywhere in this file before:** the spreadsheet the app creates should always be titled
+  exactly the app's own brand name, no suffix — a generic title like
+  "Social Planner Data (app-managed)" (what `SPREADSHEET_TITLE` in `schema.ts` actually was)
+  reads as a mismatch to a buyer who expects to find a file called exactly what the app is
+  called in their Drive. TrackerA had the identical bug and already fixed it to just
+  `"Life Planner"`; TrackerC's is now just `"Social Planner"`. **TrackerB has this exact same
+  title-mismatch bug too (`"Budget Planner Data (app-managed)"`), not yet fixed there** —
+  flagged, not fixed, since it wasn't part of what was asked this time.
 - **STILL OPEN, not yet fixed:** `auth.ts` uses one shared `let state` token slot for
   BOTH Sheets and Calendar scopes — requesting one would silently evict the other. Lower
   urgency than it sounds right now: **TrackerC doesn't actually request `SCOPE_CALENDAR`
@@ -398,11 +462,17 @@ tests/              schema / merge / tombstones (+ any new pure-logic tests)
     explicitly at the END of `bootstrap.ts`'s hydration, never at a store module's own
     top-level/import time. See TrackerA's `src/stores/useSync.ts`'s `resumePendingPush()` +
     `src/stores/bootstrap.ts`'s `runBootstrap()` for the reference shape.
-  - `relink()` — check whether this repo's version leaves demo mode before pulling (TrackerA's
-    didn't, and a brand-new device defaults to demo mode ON, exactly `relink()`'s target
-    scenario, so the real data it pulls down never actually persisted and silently reverted to
-    the sample on the next reload). Fix (already applied in TrackerA): `relink()` now checks
-    `isDemo()` and calls `setDemoMode(false)` before `pull()`, mirroring `connect()`.
+  - **RESOLVED 2026-07-15 — checked and it was live here too:** `relink()` did NOT leave demo
+    mode before pulling, same bug as TrackerA's pre-fix code. A brand-new device defaults to
+    demo mode ON, exactly `relink()`'s target scenario ("a brand-new browser has no remembered
+    id"), so the real Sheet data it pulled down showed in the stores for that session only,
+    never actually persisted to IndexedDB (gated off while demo mode is on — see `db.ts`'s
+    `demoMode` flag), and silently reverted to the in-memory sample on the next reload — while
+    the app still reported "Connected" the whole time. Fixed by mirroring `connect()`'s
+    existing guard exactly: `relink()` now checks `isDemo()` and calls `setDemoMode(false)`
+    before `pull()`. Found while auditing the whole Google-connection surface against TrackerA
+    at the user's request, alongside adding `startNewSheet()`/wrong-account handling (see the
+    "Google Sheet as database" section's own note on those, added the same day).
 - **CONFIRMED PRESENT HERE, same 2026-07-14 QA pass, non-sync bugs:**
   - `src/components/CountUp.tsx:26` and `src/components/ProgressRing.tsx` (confirmed both)
     hardcode animating FROM `0` on every value change, not just initial mount — any small

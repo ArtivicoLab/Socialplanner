@@ -112,21 +112,26 @@ export async function createSpreadsheet(
 export interface SpreadsheetMeta {
   title: string;
   tabTitles: string[];
+  /** Title + the tab's own numeric sheetId (stable even across a rename —
+   *  needed by renameTabs, since the rename API keys off this, not the title). */
+  tabs: { id: number; title: string }[];
 }
 
 export async function getMeta(spreadsheetId: string, allowInteractive: boolean): Promise<SpreadsheetMeta> {
   const res = await authedFetch(
-    `${BASE}/${spreadsheetId}?fields=properties.title,sheets.properties.title`,
+    `${BASE}/${spreadsheetId}?fields=properties.title,sheets.properties.sheetId,sheets.properties.title`,
     {},
     allowInteractive
   );
   const json = (await ok(res)) as {
     properties: { title: string };
-    sheets: { properties: { title: string } }[];
+    sheets: { properties: { sheetId: number; title: string } }[];
   };
+  const tabs = json.sheets.map((s) => ({ id: s.properties.sheetId, title: s.properties.title }));
   return {
     title: json.properties.title,
-    tabTitles: json.sheets.map((s) => s.properties.title),
+    tabTitles: tabs.map((t) => t.title),
+    tabs,
   };
 }
 
@@ -140,6 +145,38 @@ export async function ensureTabs(
   const missing = wantTabs.filter((t) => !meta.tabTitles.includes(t));
   if (missing.length === 0) return;
   const requests = missing.map((title) => ({ addSheet: { properties: { title } } }));
+  const res = await authedFetch(`${BASE}/${spreadsheetId}:batchUpdate`, {
+    method: "POST",
+    body: JSON.stringify({ requests }),
+  }, allowInteractive);
+  await ok(res);
+}
+
+/**
+ * Rename existing tabs IN PLACE (all rows/data untouched) — for migrating a
+ * tab title the app itself renamed (see schema.ts's TAB comment). This is
+ * NOT the same as ensureTabs: ensureTabs only ever adds a brand-new blank
+ * tab for a name it doesn't recognize, which would silently orphan an
+ * older-named tab's real data instead of carrying it forward. Each pair is
+ * skipped if `from` doesn't currently exist, or `to` already does (so this
+ * is safe to call unconditionally on every connect — a no-op once migrated).
+ */
+export async function renameTabs(
+  spreadsheetId: string,
+  renames: { from: string; to: string }[],
+  allowInteractive: boolean
+): Promise<void> {
+  const meta = await getMeta(spreadsheetId, allowInteractive);
+  const idByTitle = new Map(meta.tabs.map((t) => [t.title, t.id]));
+  const requests = renames
+    .filter(({ from, to }) => idByTitle.has(from) && !idByTitle.has(to))
+    .map(({ from, to }) => ({
+      updateSheetProperties: {
+        properties: { sheetId: idByTitle.get(from), title: to },
+        fields: "title",
+      },
+    }));
+  if (requests.length === 0) return;
   const res = await authedFetch(`${BASE}/${spreadsheetId}:batchUpdate`, {
     method: "POST",
     body: JSON.stringify({ requests }),

@@ -16,7 +16,15 @@ const DEFAULTS: Settings = {
   activated: false,
   hideAtsHint: false,
   tourDone: false,
+  updatedAt: "",
 };
+
+// The Settings fields that round-trip through the Sheet's Meta tab (see
+// sync.ts's pushSettingsMeta/pullSettingsMeta) — a local edit to any of
+// these bumps `updatedAt` and schedules a push; everything else (theme,
+// hiddenRoutes, tabBarRoutes, accessCode/activated, onboarding flags) is
+// deliberately local-device-only.
+const SYNCED_KEYS: (keyof Settings)[] = ["name", "weekStart", "categories", "categoryColors", "goals"];
 
 interface SettingsState extends Settings {
   loaded: boolean;
@@ -39,12 +47,32 @@ export const useSettings = create<SettingsState>((set, get) => ({
   },
   update: (patch) => {
     const prev = pickSettings(get());
-    const next = { ...prev, ...patch };
+    const touchesSynced = SYNCED_KEYS.some((k) => k in patch);
+    const updatedAt = touchesSynced ? new Date().toISOString() : prev.updatedAt;
+    const next = { ...prev, ...patch, updatedAt };
     if (patch.theme) applyTheme(patch.theme);
-    set(patch);
+    set({ ...patch, updatedAt });
     void setKV(KEY, next);
+    if (touchesSynced) {
+      // Dynamic import: useSync -> lib/sync -> stores/useSettings would
+      // otherwise be a require cycle at module-eval time.
+      void import("../stores/useSync").then(({ useSync }) => useSync.getState().touchSettings());
+    }
   },
 }));
+
+/** Applied by the sync layer (sync.ts's pullSettingsMeta) when the Sheet's
+ *  Meta tab has a newer name/weekStart/categories/categoryColors/goals than
+ *  this device — bypasses `update()` on purpose: `update()` always stamps
+ *  `updatedAt` to "now" and schedules a push, which would immediately push
+ *  the value straight back up and mask genuine cross-device merges. */
+export function applyRemoteSettings(patch: Partial<Settings> & { updatedAt: string }): void {
+  const prev = pickSettings(useSettings.getState());
+  const next = { ...prev, ...patch };
+  if (patch.theme) applyTheme(patch.theme);
+  useSettings.setState(patch);
+  void setKV(KEY, next);
+}
 
 function pickSettings(s: Settings): Settings {
   return {
@@ -60,5 +88,6 @@ function pickSettings(s: Settings): Settings {
     activated: s.activated,
     hideAtsHint: s.hideAtsHint,
     tourDone: s.tourDone,
+    updatedAt: s.updatedAt,
   };
 }

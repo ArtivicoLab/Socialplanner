@@ -2436,8 +2436,31 @@ textarea.input {
 .settings-swatch--sm {
   width: 14px;
   height: 14px;
-  box-shadow: none;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 25%, transparent);
   border: 1px solid var(--hairline);
+  /* A slow, gentle "this is tappable" hint — a real bug found live
+     2026-07-15: nothing signaled the dot opens a color picker, so a
+     hash-assigned bad color (see lib/ui.ts's EXTENDED_PASTELS fix) had no
+     obvious way to notice/fix. Pauses on hover/focus so it doesn't fight
+     the :active tap-scale below, and respects reduced-motion. */
+  animation: settings-swatch-pulse 2.4s ease-in-out infinite;
+}
+.settings-swatch--sm:hover,
+.settings-swatch--sm:focus-visible {
+  animation-play-state: paused;
+}
+@keyframes settings-swatch-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 22%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ink) 0%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-swatch--sm {
+    animation: none;
+  }
 }
 
 /* ---- Debt ---- */

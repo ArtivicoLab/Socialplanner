@@ -6,6 +6,7 @@ import { isValidAccessCode } from "../lib/access";
 import { isDemo, setDemoFlag } from "../lib/demo";
 import { seedChangelogSeenIfFirstRun } from "../lib/changelog";
 import { loadTombstones } from "../lib/tombstones";
+import { ensureConnectedTabsUpToDate } from "../lib/sync";
 import { useSettings } from "./useSettings";
 import { useSync } from "./useSync";
 import { useHashtagGroups, useHighlights, useIdeas, useMonthlyGoals, useMoodBoardPins, usePerformance, usePlatforms, usePosts } from "./v2";
@@ -97,6 +98,13 @@ async function runBootstrap() {
   // Device-picked post photos are never part of the demo seed (writes are
   // gated off in demo mode anyway) — load whatever's really on this device.
   await useLocalImages.getState().load();
+
+  // Fire-and-forget, deliberately not awaited: a background health check for
+  // a session that was ALREADY connected before this boot (a fresh
+  // connect()/relink() already does its own version of this). Never blocks
+  // first render, never surfaces an error UI — see its own comment in
+  // sync.ts for why silently retrying next boot is safe here.
+  void ensureConnectedTabsUpToDate();
 }
 
 /**

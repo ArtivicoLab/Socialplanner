@@ -77,8 +77,13 @@ export function PostSheet({ open, post, prefillDate, onClose, onSave, onDelete }
   const [picking, setPicking] = useState(false);
   const pendingPreview = useObjectUrl(pendingBlob ?? undefined);
   const existingPreview = useObjectUrl(photoCleared ? undefined : existingLocalBlob);
-  const photoPreview = pendingPreview || existingPreview;
   const hasLocalPhoto = !!pendingBlob || (!photoCleared && !!existingLocalBlob);
+  // A pasted image URL previews here too (same priority as PostPhoto: local
+  // device photo beats a URL) — otherwise a post whose only photo is a URL
+  // (e.g. picked before this device existed) looks photo-less until the
+  // "paste a link" disclosure is expanded by hand.
+  const urlPreview = !hasLocalPhoto && image.trim() !== "" && !imgBroken ? image.trim() : "";
+  const photoPreview = pendingPreview || existingPreview || urlPreview;
 
   useEffect(() => {
     if (!open) return;
@@ -374,7 +379,11 @@ export function PostSheet({ open, post, prefillDate, onClose, onSave, onDelete }
 
         {photoPreview ? (
           <div className="postsheet-photopreview">
-            <img src={photoPreview} alt="Post photo preview" />
+            <img
+              src={photoPreview}
+              alt="Post photo preview"
+              onError={() => { if (!hasLocalPhoto) setImgBroken(true); }}
+            />
             <button
               type="button"
               className="postsheet-photopreview__remove"
@@ -425,15 +434,6 @@ export function PostSheet({ open, post, prefillDate, onClose, onSave, onDelete }
             <div className="postsheet-imgnote muted fs-13">
               That link didn't load. The tile will use the cover color instead.
             </div>
-          )}
-          {image.trim() !== "" && !photoPreview && !imgBroken && (
-            <img
-              className="postsheet-imgpreview"
-              src={image.trim()}
-              alt="Post image preview"
-              onError={() => setImgBroken(true)}
-              onLoad={() => setImgBroken(false)}
-            />
           )}
         </details>
       </div>
