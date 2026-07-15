@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Segmented } from "../../components/Segmented";
 import { BottomSheet } from "../../components/BottomSheet";
+import { LockGatedButton } from "../../components/LockGatedButton";
 import { HelpTip } from "../../components/HelpTip";
-import { IconChevronDown, IconChevronUp, IconClose } from "../../components/icons";
+import { IconChevronDown, IconChevronUp, IconClose, IconCompass } from "../../components/icons";
+import { FAQ_ITEMS, openScreenTour, TOUR_SCREENS } from "../../components/CoachTour";
 import { useSettings } from "../../stores/useSettings";
 import { useSync } from "../../stores/useSync";
 import { confirmDialog } from "../../stores/useConfirm";
@@ -11,7 +13,7 @@ import { currentLockoutMs, tryUnlock } from "../../lib/access";
 import { isDemo } from "../../lib/demo";
 import { spreadsheetUrl } from "../../lib/google/sheets";
 import { navigate } from "../../router";
-import { ALL_NAV_ITEMS, HIDEABLE_NAV_ITEMS } from "../../nav";
+import { ALL_NAV_ITEMS, HIDEABLE_NAV_ITEMS, ROUTE_LABELS } from "../../nav";
 import { APP_NAME, APP_VERSION, BUILD_SHA } from "../../lib/config";
 import { useAppUpdate } from "../../lib/appUpdate";
 import { usePlatforms } from "../../stores/v2";
@@ -410,6 +412,44 @@ export function SettingsScreen() {
         </button>
       </div>
 
+      <div className="section-title">
+        Frequently asked
+        <HelpTip text="Tap a question to jump straight to that spotlight, wherever it lives, instead of stepping through a whole screen's tour to find it." />
+      </div>
+      <div className="card settings-faq" data-tour="settings-faq">
+        {FAQ_ITEMS.map((item) => (
+          <button
+            key={item.target}
+            className="settings-faq-row"
+            onClick={() => openScreenTour(item.route, item.target)}
+          >
+            <span className="settings-faq-row__ico" aria-hidden>
+              <IconCompass size={15} />
+            </span>
+            <span className="settings-faq-row__label">{item.question}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="section-title">
+        All coach tours
+        <HelpTip text="Every screen's own guided tour, in one place, so you can replay any of them without having to open that screen first and find its compass icon." />
+      </div>
+      <div className="card settings-faq settings-faq--tours" data-tour="settings-tours">
+        {TOUR_SCREENS.map((r) => (
+          <button
+            key={r}
+            className="settings-faq-row"
+            onClick={() => openScreenTour(r)}
+          >
+            <span className="settings-faq-row__ico" aria-hidden>
+              <IconCompass size={15} />
+            </span>
+            <span className="settings-faq-row__label">{ROUTE_LABELS[r]}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="section-title">Appearance</div>
       <div className="card" data-tour="settings-appearance">
         <label className="field__label">Theme</label>
@@ -704,13 +744,12 @@ export function SettingsScreen() {
               Link a brand new, empty Google Sheet instead of this one. Your current sheet
               isn't deleted, it stays in your Drive untouched, just unlinked from the app.
             </p>
-            <button
-              className="btn btn--danger"
-              disabled={startingNewSheet}
-              onClick={handleStartNewSheet}
-            >
-              {startingNewSheet ? "Starting…" : "Start a new sheet"}
-            </button>
+            <LockGatedButton
+              label="Start a new sheet"
+              busyLabel="Starting…"
+              busy={startingNewSheet}
+              onConfirm={handleStartNewSheet}
+            />
             {newSheetError && <p className="neg settings-error">{newSheetError}</p>}
           </div>
         )}
@@ -719,9 +758,9 @@ export function SettingsScreen() {
           <p className="muted settings-hint">
             Delete all planner data on this device. This cannot be undone.
           </p>
-          <button
-            className="btn btn--danger"
-            onClick={async () => {
+          <LockGatedButton
+            label="Start over (erase everything)"
+            onConfirm={async () => {
               const ok = await confirmDialog({
                 title: "Delete all planner data?",
                 message: "This clears everything on this device. This cannot be undone.",
@@ -730,9 +769,7 @@ export function SettingsScreen() {
               });
               if (ok) void resetEverything();
             }}
-          >
-            Start over (erase everything)
-          </button>
+          />
         </div>
       </div>
 

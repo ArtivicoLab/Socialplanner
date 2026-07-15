@@ -66,15 +66,22 @@
         different mechanism than push-first. See CLAUDE.md for the caveat
         (reasoned through, not battle-tested against a real conflict yet).
   - [x] ~~Settings (name, weekStart, content pillars + their colors, post
-        goals) never reached the Sheet at all — only `accessCode` did, via
-        the Meta tab. A pillar renamed/recolored, or a goal added, on one
-        device silently never showed up after switching devices.~~ — **fixed
-        2026-07-15**: those 5 fields now round-trip through the same Meta
-        key/value tab (JSON-encoded for the array/object ones), gated by a
-        new `Settings.updatedAt` so pull() applies last-write-wins the same
-        way every row-based collection already does. `theme`/`hiddenRoutes`/
-        `tabBarRoutes`/`accessCode`/onboarding flags stay local-device-only
-        on purpose. See `lib/sync.ts`'s `pushSettingsMeta`/`applySettingsMeta`.
+        goals, hidden nav sections, the phone bottom-bar layout) never
+        reached the Sheet at all — only `accessCode` did, via the Meta tab.
+        Any of these changed on one device silently never showed up after
+        switching devices.~~ — **fixed 2026-07-15, in two passes**: name/
+        weekStart/categories/categoryColors/goals first, then hiddenRoutes/
+        tabBarRoutes right after — that first pass had assumed those two
+        were "just local UI layout" and deliberately left them out, which
+        turned out to be the wrong call the moment it was tested (a user who
+        hides a module or curates their bottom bar expects that to follow
+        them, same as pillars/goals). All 7 now round-trip through the same
+        Meta key/value tab (JSON-encoded for the array/object ones), gated
+        by a `Settings.updatedAt` so pull() applies last-write-wins the same
+        way every row-based collection already does. Only `theme` (a display
+        preference) and accessCode/activated/onboarding flags (each with
+        their own separate handling) are still deliberately local-device-
+        only. See `lib/sync.ts`'s `pushSettingsMeta`/`applySettingsMeta`.
         Caveat: like every other collection, this only pulls on an explicit
         connect/relink, not automatically in the background — see the
         reauth/retry item below, this app has no periodic pull yet at all.

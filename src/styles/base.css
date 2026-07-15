@@ -2330,6 +2330,132 @@ textarea.input {
   font-size: 13px;
   margin-top: 10px;
 }
+.lockgate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lockgate__lockwrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.lockgate__confetti {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: confettiBurst 0.65s ease-out forwards;
+}
+@keyframes confettiBurst {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) rotate(var(--rot));
+    opacity: 0;
+  }
+}
+.lockgate__lock {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 2px solid var(--hairline);
+  flex: none;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.lockgate__lock:active {
+  transform: scale(0.92);
+}
+/* Police-light strobe while still locked — colors are fixed (not theme
+   tokens) on purpose, see LockGatedButton.tsx's doc comment. transition:
+   none keeps each flash a hard cut, not a fade, so it actually reads as a
+   strobe/siren rather than a soft pulse. */
+.lockgate__lock--flashred {
+  background: #ff1a1a;
+  border-color: #ff1a1a;
+  color: #fff;
+  box-shadow: 0 0 10px 2px rgba(255, 26, 26, 0.55);
+  transition: none;
+}
+.lockgate__lock--flashblue {
+  background: #1a4dff;
+  border-color: #1a4dff;
+  color: #fff;
+  box-shadow: 0 0 10px 2px rgba(26, 77, 255, 0.55);
+  transition: none;
+}
+.lockgate__lock--open {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: var(--success);
+  transform: scale(1.08);
+  animation: lockPop 0.4s var(--ease);
+}
+@keyframes lockPop {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  40% {
+    transform: scale(1.35) rotate(-10deg);
+  }
+  70% {
+    transform: scale(0.92) rotate(6deg);
+  }
+  100% {
+    transform: scale(1.08) rotate(0deg);
+  }
+}
+.lockgate__btn {
+  flex: 1;
+  opacity: 0.5;
+  transition: opacity 0.2s var(--ease);
+}
+.lockgate__btn--unlocked {
+  opacity: 1;
+  animation: btnPop 0.35s var(--ease);
+}
+@keyframes btnPop {
+  0% {
+    transform: scale(0.94);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.lockgate__btn--shake {
+  animation: btnShake 0.4s var(--ease);
+}
+@keyframes btnShake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
 .field--flush {
   margin-bottom: 0;
 }
@@ -2460,6 +2586,79 @@ textarea.input {
 @media (prefers-reduced-motion: reduce) {
   .settings-swatch--sm {
     animation: none;
+  }
+}
+
+/* ---- Settings FAQ / "All coach tours" lists — a curated set of questions
+   or screens (CoachTour.tsx's FAQ_ITEMS / TOUR_SCREENS) that launch a coach
+   spotlight or a whole screen's tour. These are their own kind of button on
+   purpose (confirmed live 2026-07-15, twice): a hairline-divided plain-text
+   list read as breadcrumbs/tabs, and a plain filled row with a trailing
+   chevron still read as "navigate deeper," not "start a guide." So: a pill
+   led by the app's coach-tour compass badge (the same icon the Header/
+   Sidebar coach buttons already use), and NO trailing arrow — the compass
+   is the affordance, and it turns to full accent on hover. ---- */
+.settings-faq {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+/* Short screen names wrap as compact side-by-side pills instead of one
+   full-width bar each. */
+.settings-faq--tours {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.settings-faq--tours .settings-faq-row {
+  width: auto;
+}
+.settings-faq-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  padding: 7px 16px 7px 7px;
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), transform 0.12s var(--ease), box-shadow 0.15s var(--ease);
+}
+.settings-faq-row__ico {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease), transform 0.35s var(--ease);
+}
+.settings-faq-row__label {
+  min-width: 0;
+}
+.settings-faq-row:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.settings-faq-row:hover .settings-faq-row__ico {
+  background: var(--accent);
+  color: #fff;
+  transform: rotate(45deg);
+}
+.settings-faq-row:active {
+  transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-faq-row:hover .settings-faq-row__ico {
+    transform: none;
   }
 }
 

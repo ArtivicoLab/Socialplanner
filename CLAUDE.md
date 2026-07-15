@@ -201,14 +201,34 @@ key prefix) copies.
   chart whose numbers can't be read on hover; pass a `formatValue`.
 - **Never use the native `window.confirm()`/`window.alert()`.** They render as the
   browser's raw unstyled system popup — on an installed PWA that looks like the app
-  is broken, and it can't be themed for dark mode or match the rest of the UI. This
-  is a live bug here today (`confirm()`/`window.confirm()` in SettingsScreen,
-  CalendarScreen, PostSheet, HashtagsScreen) — same root cause caught in TrackerA.
-  Build a `confirmDialog({ title, message, confirmLabel?, danger? })` helper (a
-  zustand store returning a `Promise<boolean>`) rendered through the existing
-  `BottomSheet` via a `ConfirmHost` mounted once in `App.tsx` — same call shape as
-  `confirm()`, just `await` it. For non-blocking confirmations, use a toast, not
-  `alert()`.
+  is broken, and it can't be themed for dark mode or match the rest of the UI. Use
+  `confirmDialog({ title, message, confirmLabel?, danger? })` from
+  `src/stores/useConfirm.ts` (`await`s a boolean, same call shape as `confirm()`) —
+  it's already built, rendered through the existing `BottomSheet` via a `ConfirmHost`
+  mounted once in `App.tsx`, same as TrackerA. For non-blocking confirmations, use a
+  toast, not `alert()`. **Status, updated 2026-07-15 (this bullet was stale — it used
+  to say "build a confirmDialog helper" as if one didn't exist yet):**
+  `SettingsScreen.tsx`'s two Danger Zone buttons now use it (fixed while touching that
+  file for the padlock/new-sheet work below); `CalendarScreen.tsx`, `PostSheet.tsx`,
+  `HashtagsScreen.tsx`, and `SettingsScreen.tsx`'s own `deletePlatform` still use raw
+  `confirm()` — see TODO.md.
+- **A genuinely destructive Danger Zone action gets `LockGatedButton`
+  (`src/components/LockGatedButton.tsx`), not a plain danger button — added
+  2026-07-15, ported from TrackerA.** Two tap-to-unlock padlock latches flank the
+  button; both must be opened before a tap does anything, and an early tap shakes the
+  button + haptic-buzzes instead of silently doing nothing. Not real security, just
+  deliberate friction so "start a new sheet" / "erase everything" survive a misplaced
+  tap. Unlocking a latch bursts a small CSS-only confetti burst. While still locked,
+  each latch strobes red/white like a police light — driven by `setTimeout` with a
+  RANDOMIZED delay each tick (not a CSS `@keyframes` loop), so the flash sequence
+  never settles into an exact repeating rhythm the way a fixed-duration CSS animation
+  always eventually does; stops the instant that latch opens. Colors are fixed hex,
+  not theme tokens, on purpose — a warning strobe should look the same in light/dark/
+  gallery mode. `SettingsScreen.tsx`'s "Start over" button also nests its own
+  `confirmDialog()` call inside `onConfirm` — belt and suspenders, two latches AND a
+  themed confirm for the single highest-stakes action. See TrackerA's CLAUDE.md
+  (Owner preferences) for the fuller writeup; ported identically to TrackerB the same
+  day, except TrackerB's still nests a native `confirm()` (see that bullet above).
 
 ## Tech stack (fixed — do not substitute)
 - Vite + React 18 + TypeScript, SPA, hash router (no react-router), static files.
@@ -256,14 +276,17 @@ tests/              schema / merge / tombstones (+ any new pure-logic tests)
 
 ## Google Sheet as database
 - `schema.ts` defines every tab + column order. Row 1 is an app-written header.
-- Tabs: Posts, HashtagGroups, Ideas, Platforms, Performance, Highlights,
-  Tombstones, Meta (key/value; carries the Etsy access code, and — as of
-  2026-07-15 — `name`/`weekStart`/`categories`/`categoryColors`/`goals`,
-  gated by a `settingsUpdatedAt` key so pull() can last-write-wins them the
-  same way every row-based tab already merges by `updatedAt`; see
-  `lib/sync.ts`'s `pushSettingsMeta`/`applySettingsMeta`. Everything else in
-  `Settings` — theme, hiddenRoutes, tabBarRoutes, onboarding flags — stays
-  local-device-only on purpose, not synced).
+- Tabs: Scheduler (Posts, internally — `TAB.Posts`, renamed 2026-07-15 to
+  match the app's own nav label, see schema.ts's TAB comment), Hashtags
+  (`TAB.HashtagGroups`, same reason), Idea Bank (`TAB.Ideas`, same reason),
+  Platforms, Performance, Highlights, Tombstones, Meta (key/value; carries
+  the Etsy access code, and — as of 2026-07-15 — `name`/`weekStart`/
+  `categories`/`categoryColors`/`goals`/`hiddenRoutes`/`tabBarRoutes`, gated
+  by a `settingsUpdatedAt` key so pull() can last-write-wins them the same
+  way every row-based tab already merges by `updatedAt`; see `lib/sync.ts`'s
+  `pushSettingsMeta`/`applySettingsMeta`. Only `theme` (a display
+  preference) and accessCode/activated/onboarding flags — each with their
+  own separate handling — stay local-device-only on purpose, not synced).
 - Records keyed by `id` (col A, nanoid) — NEVER by row position. Tolerate
   extra user columns, reordered/blank rows.
 - Sync: pull = batchGet all tabs → row-granular merge by `updatedAt` +

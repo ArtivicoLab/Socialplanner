@@ -329,6 +329,8 @@ const WEEK_START_META_KEY = "weekStart";
 const CATEGORIES_META_KEY = "categories";
 const CATEGORY_COLORS_META_KEY = "categoryColors";
 const GOALS_META_KEY = "goals";
+const HIDDEN_ROUTES_META_KEY = "hiddenRoutes";
+const TABBAR_ROUTES_META_KEY = "tabBarRoutes";
 const SETTINGS_UPDATED_META_KEY = "settingsUpdatedAt";
 
 // Separate from the per-collection `dirty` tabs above: Settings isn't a
@@ -342,17 +344,21 @@ export function markSettingsDirty(): void {
   settingsMetaDirty = true;
 }
 
-/** Push name/weekStart/categories/categoryColors/goals into the same Meta
- *  key/value tab as accessCode — via writeMetaKey's read-modify-write, so
- *  this never wipes the accessCode row written by syncAccessCode(). */
+/** Push name/weekStart/categories/categoryColors/goals/hiddenRoutes/
+ *  tabBarRoutes into the same Meta key/value tab as accessCode — via
+ *  writeMetaKey's read-modify-write, so this never wipes the accessCode row
+ *  written by syncAccessCode(). */
 async function pushSettingsMeta(id: string, allowInteractive: boolean): Promise<void> {
-  const { name, weekStart, categories, categoryColors, goals, updatedAt } = useSettings.getState();
+  const { name, weekStart, categories, categoryColors, goals, hiddenRoutes, tabBarRoutes, updatedAt } =
+    useSettings.getState();
   const map = await readMetaTab(id, allowInteractive);
   map.set(NAME_META_KEY, name);
   map.set(WEEK_START_META_KEY, String(weekStart));
   map.set(CATEGORIES_META_KEY, JSON.stringify(categories));
   map.set(CATEGORY_COLORS_META_KEY, JSON.stringify(categoryColors));
   map.set(GOALS_META_KEY, JSON.stringify(goals));
+  map.set(HIDDEN_ROUTES_META_KEY, JSON.stringify(hiddenRoutes));
+  map.set(TABBAR_ROUTES_META_KEY, JSON.stringify(tabBarRoutes));
   map.set(SETTINGS_UPDATED_META_KEY, updatedAt);
   await writeTab(id, TAB.Meta, [["key", "value"], ...map.entries()], allowInteractive);
   settingsMetaDirty = false;
@@ -368,13 +374,14 @@ function parseJsonArray(raw: string | undefined): string[] | undefined {
   }
 }
 
-/** Adopt the Sheet's name/weekStart/categories/categoryColors/goals when
- *  they're newer than this device's — last-write-wins by `updatedAt`, same
- *  merge philosophy as every row-based collection, just applied to one
- *  object instead of per-row. Silently no-ops if the Meta tab doesn't have
- *  a newer (or any) settingsUpdatedAt yet — e.g. before this feature shipped
- *  the key never existed at all. Takes an already-fetched map (pull() folds
- *  Meta into its one batchGet call rather than a second round-trip). */
+/** Adopt the Sheet's name/weekStart/categories/categoryColors/goals/
+ *  hiddenRoutes/tabBarRoutes when they're newer than this device's —
+ *  last-write-wins by `updatedAt`, same merge philosophy as every row-based
+ *  collection, just applied to one object instead of per-row. Silently
+ *  no-ops if the Meta tab doesn't have a newer (or any) settingsUpdatedAt
+ *  yet — e.g. before this feature shipped the key never existed at all.
+ *  Takes an already-fetched map (pull() folds Meta into its one batchGet
+ *  call rather than a second round-trip). */
 function applySettingsMeta(map: Map<string, string>): void {
   const remoteUpdatedAt = map.get(SETTINGS_UPDATED_META_KEY) ?? "";
   if (!remoteUpdatedAt || remoteUpdatedAt <= useSettings.getState().updatedAt) return;
@@ -387,6 +394,12 @@ function applySettingsMeta(map: Map<string, string>): void {
   if (categories?.length) patch.categories = categories;
   const goals = parseJsonArray(map.get(GOALS_META_KEY));
   if (goals) patch.goals = goals;
+  // Empty is a real, valid state for both (nothing hidden / nothing pinned),
+  // so — unlike categories above — don't require non-empty to apply.
+  const hiddenRoutes = parseJsonArray(map.get(HIDDEN_ROUTES_META_KEY));
+  if (hiddenRoutes) patch.hiddenRoutes = hiddenRoutes;
+  const tabBarRoutes = parseJsonArray(map.get(TABBAR_ROUTES_META_KEY));
+  if (tabBarRoutes) patch.tabBarRoutes = tabBarRoutes;
   const rawColors = map.get(CATEGORY_COLORS_META_KEY);
   if (rawColors) {
     try {

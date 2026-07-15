@@ -20,6 +20,7 @@ import { SettingsScreen } from "./features/settings/SettingsScreen";
 import { bootstrap } from "./stores/bootstrap";
 import { preloadGis } from "./lib/google/auth";
 import { CoachTour, hasSeenTour } from "./components/CoachTour";
+import type { Route } from "./router";
 import { WhatsNewBanner } from "./components/WhatsNewBanner";
 import { ConfirmHost } from "./components/ConfirmDialog";
 
@@ -27,6 +28,7 @@ export default function App() {
   const route = useRoute();
   const [ready, setReady] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [tourStartTarget, setTourStartTarget] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     bootstrap().then(() => {
@@ -37,6 +39,7 @@ export default function App() {
   }, []);
 
   function replayTour() {
+    setTourStartTarget(undefined);
     setShowTour(true);
   }
 
@@ -45,11 +48,27 @@ export default function App() {
   // screen the button was tapped on).
   useEffect(() => {
     const replayWelcome = () => {
+      setTourStartTarget(undefined);
       navigate("dashboard");
       requestAnimationFrame(() => setShowTour(true));
     };
     window.addEventListener("coach:welcome", replayWelcome);
     return () => window.removeEventListener("coach:welcome", replayWelcome);
+  }, []);
+
+  // Settings' FAQ list and "All coach tours" list (openScreenTour in
+  // CoachTour.tsx): jump to one spotlight (target set) or a whole screen's
+  // tour from the top (target omitted). Same navigate-then-open pattern as
+  // "Replay the welcome tour" above, plus the target to start at.
+  useEffect(() => {
+    const openFaq = (e: Event) => {
+      const { route: faqRoute, target } = (e as CustomEvent<{ route: Route; target?: string }>).detail;
+      setTourStartTarget(target);
+      navigate(faqRoute);
+      requestAnimationFrame(() => setShowTour(true));
+    };
+    window.addEventListener("coach:faq", openFaq);
+    return () => window.removeEventListener("coach:faq", openFaq);
   }, []);
 
   if (!ready) {
@@ -85,7 +104,15 @@ export default function App() {
       <TabBar active={route} />
       <UpdatePrompt />
       <ConfirmHost />
-      {showTour && <CoachTour onDone={() => setShowTour(false)} />}
+      {showTour && (
+        <CoachTour
+          startTarget={tourStartTarget}
+          onDone={() => {
+            setShowTour(false);
+            setTourStartTarget(undefined);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -65,6 +65,8 @@ import {
   Wrench,
   Gift,
   Search,
+  Lock,
+  LockOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -90,6 +92,8 @@ export const IconClose = X;
 export const IconBell = Bell;
 export const IconSettings = Settings;
 export const IconRepeat = Repeat;
+export const IconLock = Lock;
+export const IconUnlock = LockOpen;
 export const IconCompass = Compass;
 export const IconTag = Tag;
 export const IconHash = Hash;

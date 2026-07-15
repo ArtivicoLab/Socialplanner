@@ -241,6 +241,18 @@ const STEPS: TourStep[] = [
     body: "Tap the compass icon at the top of any screen to replay that screen's own quick guide, or tap \"Replay the welcome tour\" right here to see the full app introduction again from the start.",
   },
   {
+    target: "settings-faq",
+    route: "settings",
+    title: "Stuck on something specific?",
+    body: "Tap any question here to jump straight to the exact spotlight that answers it, wherever it lives, instead of stepping through a whole screen's tour to find the one tip you need.",
+  },
+  {
+    target: "settings-tours",
+    route: "settings",
+    title: "Every screen's tour, in one place",
+    body: "Tap any screen here to replay its full guided tour from the top, without having to open it first and find its own compass icon.",
+  },
+  {
     target: "settings-appearance",
     route: "settings",
     title: "Pick your look",
@@ -308,6 +320,63 @@ const STEPS: TourStep[] = [
   },
 ];
 
+// A curated FAQ — the handful of things people actually get stuck on (this
+// list started 2026-07-15 from a real one: "how do I change a pillar's
+// color"), surfaced in Settings so a user can jump straight to the relevant
+// coach spotlight instead of stepping through a whole screen's tour to find
+// it. Deliberately a SUBSET of STEPS, not a duplicate of it — every entry's
+// route+target must match a real STEPS entry (see the dev-time check right
+// below) so the question text and the spotlight it opens can never drift
+// apart, and adding a new FAQ entry can never silently point at nothing.
+export interface FaqItem {
+  question: string;
+  route: Route;
+  target: string;
+}
+export const FAQ_ITEMS: FaqItem[] = [
+  // Confirmed missing 2026-07-15: the single most central action in the app
+  // (create a post) had coach coverage but no FAQ entry pointing at it —
+  // leads with it now, deliberately first in the list.
+  { question: "How do I create my first post?", route: "dashboard", target: "dash-hero-actions" },
+  { question: "How do I change a content pillar's color?", route: "settings", target: "settings-categories" },
+  { question: "How do I connect my Google Sheet?", route: "settings", target: "settings-sheets" },
+  { question: "How do I try the app without touching my real data?", route: "settings", target: "settings-demo" },
+  { question: "How do I add a platform I don't see listed?", route: "settings", target: "settings-platforms" },
+  { question: "How do I mark a post as published?", route: "scheduler", target: "sched-status" },
+  { question: "How do I copy a post's caption to paste elsewhere?", route: "scheduler", target: "sched-copy" },
+  { question: "How do I reuse the same hashtags on every post?", route: "hashtags", target: "hash-groups" },
+  { question: "How do I turn an idea into a scheduled post?", route: "ideas", target: "ideas-list" },
+  { question: "How do I start a new year with a clean slate?", route: "settings", target: "settings-yearreset" },
+];
+if (import.meta.env.DEV) {
+  for (const item of FAQ_ITEMS) {
+    const found = STEPS.some((s) => s.target === item.target && (s.route ?? "dashboard") === item.route);
+    if (!found) {
+      // eslint-disable-next-line no-console
+      console.error(`FAQ_ITEMS: "${item.question}" points at ${item.route}/${item.target}, which has no matching STEPS entry.`);
+    }
+  }
+}
+
+/** Fired by Settings (the FAQ list, or the "All coach tours" list) —
+ *  App.tsx listens, navigates to `route` first if needed, then opens
+ *  CoachTour there. With `target`: jump straight to that one spotlight (an
+ *  FAQ pick). Without it: the screen's full tour from the top, same as its
+ *  own "Coach Tour: <Screen>" button. Mirrors the existing `coach:welcome`
+ *  full-tour-replay event, generalized to any route instead of always
+ *  Dashboard. */
+export function openScreenTour(route: Route, target?: string): void {
+  window.dispatchEvent(new CustomEvent("coach:faq", { detail: { route, target } }));
+}
+
+// Every screen that actually has a coach tour, in the order STEPS itself
+// introduces them (dashboard first, then each screen banner in turn) — for
+// Settings' "All coach tours" list. Derived from STEPS rather than
+// hand-listed so a screen can never go stale/missing here if its tour steps
+// change; labels reuse nav.tsx's ROUTE_LABELS so the wording always matches
+// each screen's own "Coach Tour: <Screen>" button exactly.
+export const TOUR_SCREENS: Route[] = [...new Set(STEPS.map((s) => s.route ?? "dashboard"))];
+
 export function hasSeenTour(): boolean {
   try {
     return localStorage.getItem(TOUR_SEEN_KEY) === "1";
@@ -361,7 +430,16 @@ function sortByPosition(steps: TourStep[]): TourStep[] {
 
 const CARD_GAP = 16;
 
-export function CoachTour({ onDone }: { onDone: () => void }) {
+export function CoachTour({
+  onDone,
+  startTarget,
+}: {
+  onDone: () => void;
+  /** Jump straight to this target's step (an FAQ pick) instead of always
+   *  starting at the top — falls back to 0 if it isn't in this page's
+   *  filtered step list for any reason. */
+  startTarget?: string;
+}) {
   const currentRoute = useRoute();
   const [openedRoute] = useState(currentRoute);
   const [pageSteps, setPageSteps] = useState<TourStep[] | null>(null);
@@ -474,6 +552,14 @@ export function CoachTour({ onDone }: { onDone: () => void }) {
     const demoKeys = [...new Set(relevant.map((s) => s.demo).filter(Boolean) as string[])];
     demoKeys.forEach((k) => window.dispatchEvent(new Event(`coach:${k}-on`)));
 
+    const applySteps = (found: TourStep[]) => {
+      setPageSteps(found);
+      if (startTarget) {
+        const idx = found.findIndex((s) => s.target === startTarget);
+        if (idx >= 0) setStep(idx);
+      }
+    };
+
     let rafId = 0, cancelled = false, frames = 0, lastCount = -1;
     const measure = () => sortByPosition(relevant.filter((s) => targetExists(s.target)));
     if (filled || demoKeys.length) {
@@ -493,7 +579,7 @@ export function CoachTour({ onDone }: { onDone: () => void }) {
         const stable = found.length === lastCount;
         lastCount = found.length;
         if ((found.length > 0 && (found.length === relevant.length || stable)) || frames >= 12) {
-          setPageSteps(found);
+          applySteps(found);
           return;
         }
         frames++;
@@ -501,7 +587,7 @@ export function CoachTour({ onDone }: { onDone: () => void }) {
       };
       rafId = requestAnimationFrame(poll);
     } else {
-      setPageSteps(measure());
+      applySteps(measure());
     }
     return () => {
       cancelled = true;

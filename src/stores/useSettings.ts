@@ -21,10 +21,16 @@ const DEFAULTS: Settings = {
 
 // The Settings fields that round-trip through the Sheet's Meta tab (see
 // sync.ts's pushSettingsMeta/pullSettingsMeta) — a local edit to any of
-// these bumps `updatedAt` and schedules a push; everything else (theme,
-// hiddenRoutes, tabBarRoutes, accessCode/activated, onboarding flags) is
-// deliberately local-device-only.
-const SYNCED_KEYS: (keyof Settings)[] = ["name", "weekStart", "categories", "categoryColors", "goals"];
+// these bumps `updatedAt` and schedules a push. Only `theme` (a display
+// preference, not content) and accessCode/activated/onboarding flags (each
+// with their own separate handling) stay local-device-only — hiddenRoutes/
+// tabBarRoutes were originally left out too as "just UI layout," but
+// confirmed live 2026-07-15 that's wrong: a user who customizes which
+// modules show, or curates their phone's bottom bar, expects that to follow
+// them to a new device same as their pillars and goals do.
+const SYNCED_KEYS: (keyof Settings)[] = [
+  "name", "weekStart", "categories", "categoryColors", "goals", "hiddenRoutes", "tabBarRoutes",
+];
 
 interface SettingsState extends Settings {
   loaded: boolean;
