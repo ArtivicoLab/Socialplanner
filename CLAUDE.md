@@ -13,6 +13,27 @@ unwanted production deploy. Build, typecheck, and test freely; leave the
 working tree uncommitted for the user to review and push themselves. Being
 asked to commit once does not carry over to later turns — ask again each time.
 
+## Deploy — GitHub Pages needs a one-time manual enable
+`.github/workflows/deploy.yml` builds and deploys to GitHub Pages on every
+push to `main`. A **brand-new repo's very first run still fails** even though
+the build job is completely fine — the deploy job errors `Failed to create
+deployment (status: 404)... Ensure GitHub Pages has been enabled`. This isn't
+a workflow bug, and the file's own built-in deploy retry (the "Wait before
+retry" step, added for GitHub's occasional transient "try again later" from
+`deploy-pages`) doesn't help here — a 404 because Pages isn't enabled yet
+isn't transient, it fails the retry identically. GitHub Pages has to be
+switched on once, by hand, in the repo's own Settings before
+`actions/deploy-pages` has anywhere to deploy TO: a fresh repo has Pages off
+by default, and nothing in the workflow file can flip that setting for
+itself — it's repo-level, not CI-level. **Fix (one-time, per repo):**
+Settings → Pages → Source → **GitHub Actions** (not "Deploy from a branch").
+Confirmed 2026-07-15: once that's set, the exact same workflow file succeeds
+on the next push with zero code or YAML changes. If this 404 is the only
+error shown, don't go debugging `deploy.yml` itself — it means "Pages isn't
+enabled yet," nothing more. (A same-run "Node.js 20 is deprecated... forced
+to run on Node.js 24" warning from `actions/setup-node` is unrelated noise,
+not a failure cause — safe to ignore.)
+
 ## Version control — always keep the version number real and visible
 The app must always show a version number that actually reflects what's
 deployed — no hardcoded placeholder strings, ever (a past bug had the Settings
@@ -81,20 +102,57 @@ reads the stored spreadsheet id) before claiming the app is connected or not.
    visit so it looks alive (see `lib/demo.ts` + `stores/bootstrap.ts` — the
    sample NEVER touches IndexedDB or the Sheet).
 
+## Access-code gate — soft by design, now throttled (know the real ceiling)
+`src/lib/access.ts`'s Etsy product-code check (`isValidAccessCode`) is a plain
+array comparison against a list baked into the client bundle at build time
+from `VITE_ACCESS_CODES` — there's no backend to check it against (see "no
+backend of ours" above), so it was never real license enforcement, only a
+soft gate to keep casual visitors on demo data and point genuine buyers at
+Connect. **Flagged 2026-07-15: it had zero brute-force protection** —
+`isValidAccessCode()` is a synchronous local function with no network
+round-trip, so anyone with devtools open could call it directly, unlimited
+times, instantly. Added `tryUnlock()` (same file) as an honest, not
+bulletproof, speed bump: an escalating lockout (5 free attempts, then 30s,
+1min, 2min... capped at 15min) after wrong guesses made through the real UI,
+persisted to BOTH `localStorage` and IndexedDB's `kv` store (`db.ts`) so a
+plain refresh, or clearing just one of the two, doesn't hand back a free
+reset — whichever storage shows the more restrictive state wins, and both are
+re-synced to match on every check. `SettingsScreen.tsx`'s product-code form
+now goes through `tryUnlock()`, never `isValidAccessCode()` directly.
+**This does not, and architecturally cannot, make the codes brute-force-proof
+from a static site.** Two ceilings, both inherent to "no backend," not bugs
+to "fix" later: (1) the valid codes still ship in the client bundle in plain
+text — anyone can read `ACCESS_CODES` straight out of the built JS with zero
+guessing, which undersells "brute force" as the real risk; hashing them at
+build time would stop that specific read but not a script that calls
+`tryUnlock()`/`isValidAccessCode()` directly from the console, bypassing the
+UI (and therefore the localStorage/IndexedDB lockout) entirely. (2) Any
+client-only lockout is inherently clearable by clearing all site data or
+opening a private window — there's no server to own the rate limit against.
+If real license enforcement ever matters more than it does today, that needs
+an actual backend endpoint to check codes against, which is a deliberate
+architecture change, not a patch to this file — don't reach for it without
+discussing the trade-off first, since it contradicts the static-hosting-only
+principle above.
+
 ## Owner preferences (learned — honor these)
-- **Audience is ~99% women** — design for her. Theme is "Milky Nude" (light) /
-  "Studio Night" (dark), a nail-polish-vanity feel: milky warm off-white paper
-  (never cool gray), a deep terracotta-coral primary accent, espresso-brown
-  ink, and a curated "polish rack" of category colors (rose, jade, wisteria,
-  buttercream, denim, sage, coral, gold, plum, taupe...) instead of a rainbow
-  of unrelated primaries — elegant and airy, not girly-pink. All tokens live
-  in `src/styles/tokens.css`; that file's top comment is the source of truth,
-  keep it in sync if the palette changes again. There's also a 4th, explicitly
-  opt-in theme, "Gallery" (`data-theme="gallery"`, picked in Settings →
-  Appearance) — an experimental art-inspired dark theme (deep pine green,
-  burnt terracotta, cream) built from a reference oil painting. It's additive
-  and off by default; treat "Milky Nude"/"Studio Night" as the real product
-  theme unless the owner says otherwise.
+- **Audience is ~99% women** — design for her. Theme is a clean white/black
+  chrome carrying ONE deliberate brand accent: the TikTok/YouTube red-pink
+  family, with a deep TikTok cyan-teal as `--accent-2` (secondary highlight,
+  chart/duotone contrast — a callback to TikTok's cyan+red "glitch" mark, see
+  the tabbar create button's split-color halves). Backgrounds/surfaces are
+  true white/near-black, not warm tan. This is deliberate: TrackerC plans
+  content FOR these platforms, so the palette should read as theirs, not as
+  an unrelated invented aesthetic — confirmed 2026-07-15 after a same-session
+  detour into a "nail polish"-themed retheme ("Milky Nude") was tried, shipped,
+  and then explicitly reverted by the owner for exactly this reason (see
+  `tokens.css`'s top comment, which is the palette's source of truth). Elegant
+  and airy, not girly-pink. There's also a 4th, explicitly opt-in theme,
+  "Gallery" (`data-theme="gallery"`, picked in Settings → Appearance) — an
+  experimental art-inspired dark theme (deep pine green, burnt terracotta,
+  cream) built from a reference oil painting. It's additive, off by default,
+  and wasn't part of the revert — the TikTok/YouTube palette above is the
+  real default product theme.
 - **No decorative or hard-to-read fonts.** Inter/system sans everywhere.
 - **No emojis in the UI.** Icons only (lucide-react via
   `src/components/icons.tsx`). The Etsy spreadsheet uses emoji statuses — we

@@ -1,16 +1,11 @@
 /* ============================================================
    Design tokens — Social Planner
    Theme: clean white/black chrome with ONE brand accent — the TikTok/
-   YouTube red-pink family (the blue/cyan accent was explicitly rejected as
-   the PRIMARY accent, but stays alive as --accent-2 and across category
-   fills — this app plans content for these exact platforms, so the palette
-   should read as theirs, not as an unrelated invented concept).
+   YouTube red-pink family (the blue/cyan accent was explicitly rejected).
    Backgrounds and surfaces are true white/near-black, not warm tan;
-   --accent-2 is a deep TikTok cyan-teal, used only where a second
-   distinguishable series/highlight is needed (charts, the tabbar create
-   button's duotone split, nav dots) — a direct callback to TikTok's
-   cyan+red "glitch" duotone brand mark. Category fills stay saturated and
-   distinct.
+   --accent-2 is a neutral (near-black on light, off-white on dark) used
+   only where a second distinguishable series/highlight is needed (charts,
+   the create button's glow). Category fills stay saturated and distinct.
    Selected via data-theme on <html>; "auto" follows OS.
    ============================================================ */
 
@@ -132,7 +127,7 @@
   --muted: #6e5560; /* warm rose-gray, not cool gray — ~6:1 */
   --hairline: #efdde2;
   --accent: #e11d48; /* TikTok/YouTube red-pink — ~4.6:1 — primary brand color */
-  --accent-2: #0a7478; /* deep TikTok cyan-teal — ~5.5:1 — secondary highlight, chart/duotone contrast */
+  --accent-2: #1f1f23; /* near-black — secondary highlight, chart contrast */
   --accent-soft: #fce7ec;
   --gold: #a8720a; /* ~4.8:1 */
   --success: #0a8a5f; /* ~4.6:1 */
@@ -156,14 +151,19 @@
 /* ---------- Dark ---------- */
 :root[data-theme="dark"] {
   --bg: #0d0a0b;
-  --bg-grad: linear-gradient(180deg, #000000 0%, #0d0a0b 55%, #171114 100%);
+  /* Wide enough stops to actually read as a gradient near black — a subtle
+     few-unit shift (the old #0d0a0b/#171114 stops) compresses into what
+     looks like one flat solid color on a real screen, especially across the
+     dash-hero card's shorter height; ending near --surface-2 keeps it
+     looking like it's emerging into the UI rather than an arbitrary brighten. */
+  --bg-grad: linear-gradient(180deg, #000000 0%, #150f11 50%, #2a1f23 100%);
   --surface: #1b1518;
   --surface-2: #261d21; /* warm plum-tinted, not cool gray */
   --ink: #f7f2f4; /* near-white text */
   --muted: #b39aa4; /* warm rose-gray */
   --hairline: #342a2f;
   --accent: #ff3d60; /* bright TikTok red-pink, reads great on near-black */
-  --accent-2: #2dd4d8; /* bright TikTok cyan-teal, secondary highlight/duotone contrast */
+  --accent-2: #fafafa; /* off-white — secondary highlight, chart contrast */
   --accent-soft: #38131c;
   --gold: #d8a72c;
   --success: #22c55e;
@@ -241,7 +241,10 @@
    skin-tone palette. */
 :root[data-theme="gallery"] {
   --bg: #1a3327;
-  --bg-grad: linear-gradient(180deg, #0f2019 0%, #1a3327 55%, #204030 100%);
+  /* Wider spread than a subtle brighten so the dash-hero card (which reuses
+     this token) reads as an actual gradient rather than flat green; ends at
+     --surface-2's own tone. */
+  --bg-grad: linear-gradient(180deg, #0a1712 0%, #1a3327 50%, #2c4c38 100%);
   --surface: #24402f;
   --surface-2: #2c4c38; /* a lighter fold of the same pine green */
   --ink: #f3e8d6; /* the sweater/skin cream, used as text throughout */
@@ -315,14 +318,14 @@
 @media (prefers-color-scheme: dark) {
   :root[data-theme="auto"] {
     --bg: #0d0a0b;
-    --bg-grad: linear-gradient(180deg, #000000 0%, #0d0a0b 55%, #171114 100%);
+    --bg-grad: linear-gradient(180deg, #000000 0%, #150f11 50%, #2a1f23 100%);
     --surface: #1b1518;
     --surface-2: #261d21;
     --ink: #f7f2f4;
     --muted: #b39aa4;
     --hairline: #342a2f;
     --accent: #ff3d60;
-    --accent-2: #2dd4d8;
+    --accent-2: #fafafa;
     --accent-soft: #38131c;
     --gold: #d8a72c;
     --success: #22c55e;

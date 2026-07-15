@@ -22,8 +22,13 @@
 - [ ] **Connect Google Sheets for real** (owner step): OAuth client id in
       `.env`, verify connect/pull/push end-to-end on localhost:5512.
 - [ ] `postStats` unit tests (planStats spans, feedPosts ordering).
-- [ ] GitHub repo + Pages deploy (update `.github/workflows/deploy.yml`
-      origin assumptions, CNAME).
+- [x] ~~GitHub repo + Pages deploy~~ — **done 2026-07-15**. Repo is
+      `ArtivicoLab/Socialplanner`, custom domain `social.artivicolab.com` via
+      `public/CNAME`. First run 404'd on the deploy step
+      ("Ensure GitHub Pages has been enabled") purely because Pages wasn't
+      switched on yet in repo Settings — not a workflow bug; see CLAUDE.md's
+      new "Deploy" section for the one-time fix and why the retry step
+      doesn't help with this particular error.
 - [ ] **Fix the sync/auth bugs below before selling this app.** This is the
       same Google Sheets sync architecture TrackerA (Life Planner) shipped
       with real paying customers, then found and fixed a long, hard-won list

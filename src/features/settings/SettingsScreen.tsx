@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Segmented } from "../../components/Segmented";
 import { BottomSheet } from "../../components/BottomSheet";
 import { HelpTip } from "../../components/HelpTip";
@@ -6,7 +6,7 @@ import { IconChevronDown, IconChevronUp, IconClose } from "../../components/icon
 import { useSettings } from "../../stores/useSettings";
 import { useSync } from "../../stores/useSync";
 import { activate, resetEverything, resetForNewYear, setDemoMode } from "../../stores/bootstrap";
-import { isValidAccessCode } from "../../lib/access";
+import { currentLockoutMs, tryUnlock } from "../../lib/access";
 import { isDemo } from "../../lib/demo";
 import { spreadsheetUrl } from "../../lib/google/sheets";
 import { navigate } from "../../router";
@@ -16,6 +16,13 @@ import { useAppUpdate } from "../../lib/appUpdate";
 import { usePlatforms } from "../../stores/v2";
 import { categoryColor, PICKABLE_CATEGORY_COLORS } from "../../lib/ui";
 import "../../styles/features/settings.css";
+
+function formatWait(ms: number): string {
+  const s = Math.ceil(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.ceil(s / 60);
+  return `${m} minute${m === 1 ? "" : "s"}`;
+}
 
 export function SettingsScreen() {
   const {
@@ -48,6 +55,15 @@ export function SettingsScreen() {
 
   const orderedPlatforms = [...platforms].sort((a, b) => a.order - b.order);
 
+  useEffect(() => {
+    if (activated) return;
+    void currentLockoutMs().then((ms) => {
+      if (ms > 0) setCodeError(`Too many attempts. Try again in ${formatWait(ms)}.`);
+    });
+    // Only needs to check once, on mount — activated flips this section away.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function toggleDemo(on: boolean) {
     setDemoOn(on);
     await setDemoMode(on);
@@ -73,11 +89,19 @@ export function SettingsScreen() {
   }
 
   function submitCode() {
-    if (!isValidAccessCode(codeInput)) {
-      setCodeError("That code doesn't look right. Check your Etsy order confirmation.");
-      return;
-    }
-    void activate(codeInput).then((ok) => {
+    const code = codeInput.trim();
+    if (!code) return;
+    setCodeError("");
+    void tryUnlock(code).then(async (result) => {
+      if (!result.ok) {
+        setCodeError(
+          result.retryAfterMs
+            ? `Too many attempts. Try again in ${formatWait(result.retryAfterMs)}.`
+            : "That code doesn't look right. Check your Etsy order confirmation."
+        );
+        return;
+      }
+      const ok = await activate(code);
       if (ok) { setCodeError(""); setCodeInput(""); }
       else setCodeError("That code doesn't look right. Check your Etsy order confirmation.");
     });
