@@ -1,0 +1,233 @@
+/* ============================================================
+   Content Idea Bank screen (imported by IdeasScreen.tsx).
+   All classes prefixed "ideas-" (screen-level) or "idea-" (card).
+   Each card exposes its pillar color as --tint (set inline).
+   ============================================================ */
+
+/* ---- Summary strip ---- */
+.ideas-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.ideas-stat {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: 10px var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.ideas-stat__num {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ideas-stat__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Filters ---- */
+.ideas-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+@media (min-width: 900px) {
+  .ideas-filters .segmented {
+    max-width: 320px;
+  }
+}
+
+.ideas-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 0 var(--sp-4);
+  height: 40px;
+  color: var(--muted);
+}
+.ideas-search:focus-within {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.ideas-search__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.ideas-search__input::placeholder {
+  color: var(--muted);
+}
+
+/* ---- Grid ---- */
+.ideas-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+@media (min-width: 700px) {
+  .ideas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+.ideas-none {
+  font-size: 14px;
+  padding: var(--sp-2) var(--sp-1);
+}
+
+/* ---- Idea card ---- */
+.idea-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  overflow: hidden;
+  padding: 0;
+  transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+/* Higher specificity than base.css's `.card + .card` (both are otherwise a
+   tied 2-class selector, so which one wins depends on Vite's dev-mode
+   <style> injection order) — this scopes it under .ideas-grid so it always
+   wins deterministically. The grid gap handles spacing, not that rule. */
+.ideas-grid .idea-card + .idea-card {
+  margin-top: 0;
+}
+.idea-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--tint);
+}
+@media (hover: hover) {
+  .idea-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+}
+.idea-card--used {
+  opacity: 0.72;
+}
+
+.idea-card__main {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--sp-3) var(--sp-4);
+  padding-left: calc(var(--sp-4) + 3px);
+}
+.idea-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.idea-card__title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.idea-card--used .idea-card__title {
+  color: var(--muted);
+}
+.idea-card__done {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--success-soft);
+  color: var(--success);
+}
+.idea-card__notes {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.idea-card__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.ideas-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+.ideas-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* ---- Schedule: the card's primary action, full width, pinned to the
+   card's bottom edge so cards sharing a grid row (stretched to equal
+   height) keep their buttons aligned regardless of title/notes length ---- */
+.idea-card__schedule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: auto;
+  padding: 10px var(--sp-3);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  transition: transform 0.12s var(--ease), background 0.15s var(--ease);
+}
+.idea-card__schedule:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--accent-soft));
+}
+.idea-card__schedule:active {
+  transform: scale(0.98);
+}
+
+/* ---- Add/edit sheet ---- */
+.ideas-sheet__pillars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.ideas-sheet__delete {
+  margin-top: 10px;
+}

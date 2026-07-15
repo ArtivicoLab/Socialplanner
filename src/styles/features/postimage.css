@@ -1,0 +1,7 @@
+/* Shared base for a post's =IMAGE-style photo. Layout (fill vs thumbnail) is
+   set by the per-screen modifier class; this just covers the box cleanly. */
+.postimg {
+  display: block;
+  object-fit: cover;
+  background: var(--surface-2);
+}

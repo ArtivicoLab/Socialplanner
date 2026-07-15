@@ -1,0 +1,63 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      # Auto-bump the patch version to this workflow's run number so every
+      # real deploy shows a version that visibly moved (not a static number
+      # someone has to remember to bump by hand). Only touches the ephemeral
+      # CI checkout — never committed back to the repo.
+      - name: Stamp build version
+        run: |
+          BASE=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          npm pkg set version="$BASE.${{ github.run_number }}"
+      - run: npm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_ACCESS_CODES: ${{ secrets.VITE_ACCESS_CODES }}
+          VITE_COMMIT_SHA: ${{ github.sha }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
+    steps:
+      # actions/deploy-pages occasionally fails with a generic "try again
+      # later" from GitHub's side even though the build is fine — retry once
+      # after a short wait instead of surfacing every transient hiccup as a
+      # failed run (and a failure email).
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Wait before retry
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 20
+      - id: deployment_retry
+        name: Retry deploy
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v4

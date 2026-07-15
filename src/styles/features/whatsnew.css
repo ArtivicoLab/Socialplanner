@@ -1,0 +1,207 @@
+/* What's New (release notes) — Tesla-style dated cards. */
+
+.wn-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.wn-current__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wn-current__label {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.wn-current__version {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.wn-current__sha {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 15px;
+}
+.wn-status {
+  margin: calc(var(--sp-2) * -0.5) 0 0;
+  font-size: 13px;
+}
+
+.wn-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+}
+
+.wn-release__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+.wn-release__badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  padding: 6px 10px;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 14px;
+}
+.wn-release__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wn-release__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.wn-release__latest {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--success);
+  background: var(--success-soft);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+}
+.wn-release__date {
+  font-size: 13px;
+  color: var(--muted);
+}
+.wn-release__summary {
+  margin: var(--sp-3) 0 var(--sp-4);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.wn-changes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.wn-change {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+}
+.wn-change__ico {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  margin-top: 1px;
+}
+.wn-change--new .wn-change__ico {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+.wn-change--improved .wn-change__ico {
+  background: color-mix(in srgb, var(--gold) 20%, transparent);
+  color: var(--gold);
+}
+.wn-change--fixed .wn-change__ico {
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success);
+}
+.wn-change__body {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.wn-change__tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 6px;
+}
+.wn-change--new .wn-change__tag { color: var(--accent); }
+.wn-change--improved .wn-change__tag { color: var(--gold); }
+.wn-change--fixed .wn-change__tag { color: var(--success); }
+
+/* A one-time "you just updated" banner (see WhatsNewBanner.tsx). */
+.wn-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: var(--sp-3) auto 0;
+  max-width: var(--main-max, 1180px);
+  padding: 10px 14px;
+  border-radius: var(--r-card);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.wn-banner__ico {
+  flex: none;
+  display: inline-flex;
+  color: var(--accent);
+}
+.wn-banner__text {
+  flex: 1;
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.wn-banner__cta {
+  flex: none;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: var(--r-pill);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.wn-banner__close {
+  flex: none;
+  display: inline-flex;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* A small unread dot for the nav/hub "What's New" entry. */
+.wn-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+@media (min-width: 700px) {
+  .wn-current__version { font-size: 22px; }
+}

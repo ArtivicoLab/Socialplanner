@@ -1,0 +1,243 @@
+/* ============================================================
+   Feed Preview screen (imported by FeedScreen.tsx).
+   All classes prefixed "feed-".
+   ============================================================ */
+
+/* ---- Controls card ---- */
+.feed-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.feed-controls__hint {
+  font-size: 14px;
+}
+.feed-controls__select {
+  width: 100%;
+}
+.feed-upto {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.feed-upto .input {
+  width: auto;
+  flex: none;
+  padding: 9px 12px;
+}
+
+/* ---- Phone-frame device card (pure CSS, no images) ---- */
+.feed-device {
+  margin: var(--sp-4) auto 0;
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 34px;
+  box-shadow: var(--shadow);
+  padding: 12px 12px 10px;
+}
+.feed-device__notch {
+  width: 88px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  margin: 0 auto 10px;
+}
+.feed-device__bar {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feed-device__home {
+  width: 110px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--hairline);
+  margin: 12px auto 2px;
+}
+.feed-jump {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: fit-content;
+  margin-left: auto;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ---- 3-column square grid (stories/reels share it — keep it simple) ---- */
+.feed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.feed-tile {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px;
+  text-align: left;
+  overflow: hidden;
+  /* Category pastels are fills under --ink (see tokens.css) */
+  color: var(--ink);
+  transition: transform 0.12s var(--ease), filter 0.15s var(--ease);
+}
+/* The photo fills the tile behind the labels. */
+.feed-tile__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+/* Over a photo, drop a top+bottom scrim and flip the labels to white so the
+   format chip and idea stay legible on any image. */
+.feed-tile--photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.34) 0%,
+    rgba(0, 0, 0, 0) 34%,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(0, 0, 0, 0.52) 100%
+  );
+  pointer-events: none;
+}
+.feed-tile--photo .feed-tile__chip,
+.feed-tile--photo .feed-tile__idea,
+.feed-tile--photo .feed-tile__date {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+}
+.feed-tile--photo .feed-tile__idea {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+.feed-tile--photo .feed-tile__date {
+  opacity: 0.9;
+}
+.feed-tile--photo .feed-tile__chip {
+  background: color-mix(in srgb, #000 42%, transparent);
+}
+.feed-tile:active {
+  transform: scale(0.96);
+}
+/* Future / not-yet-published: slightly desaturated so live vs planned reads
+   at a glance, plus the "scheduled" dot in the corner. */
+.feed-tile--planned {
+  filter: saturate(0.5);
+}
+.feed-tile--planned > * {
+  opacity: 0.88;
+}
+.feed-tile__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.feed-tile__chip svg {
+  flex: none;
+}
+.feed-tile__dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--src-task);
+  border: 1.5px solid var(--surface);
+  opacity: 1 !important; /* stays crisp even inside a dimmed planned tile */
+}
+.feed-tile__idea {
+  align-self: stretch;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  /* center the clamp block vertically between chip and date */
+  margin: auto 0;
+}
+.feed-tile__date {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.62;
+  white-space: nowrap;
+}
+
+/* ---- Legend under the device ---- */
+.feed-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-5);
+  margin-top: var(--sp-3);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.feed-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.feed-legend__swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.feed-legend__swatch--live {
+  background: var(--success);
+}
+.feed-legend__swatch--planned {
+  background: var(--src-task);
+}
+
+/* ---- Desktop ---- */
+@media (min-width: 900px) {
+  .feed-controls {
+    max-width: 560px;
+  }
+  .feed-device {
+    max-width: 420px;
+  }
+  .feed-tile__idea {
+    font-size: 12px;
+  }
+  .feed-tile__chip,
+  .feed-tile__date {
+    font-size: 10px;
+  }
+}

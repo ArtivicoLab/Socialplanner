@@ -1,0 +1,541 @@
+/* ============================================================
+   Scheduler screen + PostSheet editor.
+   Reuses base.css primitives (.card, .chip, .input, .field, .statgrid,
+   .fab, .btn); everything new is prefixed sched- / postsheet-.
+   ============================================================ */
+
+/* ---------- Headline stat strip ---------- */
+/* One card, four cells split by hairlines — replaces four separate stat
+   cards so the numbers read as a single glanceable band. */
+.sched-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: var(--sp-3) 0;
+  margin-bottom: var(--sp-4);
+}
+.sched-stats__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 2px var(--sp-2);
+}
+.sched-stats__cell + .sched-stats__cell {
+  border-left: 1px solid var(--hairline);
+}
+.sched-stats__value {
+  font-size: clamp(16px, 5.4cqw, 24px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.sched-stats__value--pub {
+  color: var(--success);
+}
+.sched-stats__label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* ---------- Filter / sort bar ---------- */
+.sched-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+.sched-search {
+  margin-bottom: var(--sp-1);
+}
+.sched-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+/* Pillar / goal / format / platform as a 2-up grid of compact selects —
+   replaces the three full chip rows that made the card tower on phones. */
+.sched-selectgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+@media (min-width: 700px) {
+  .sched-selectgrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.sched-select {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.sched-filters__sort {
+  flex: 1;
+  min-width: 150px;
+}
+.sched-filters__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 24px;
+}
+.sched-filters__clear {
+  flex: none;
+}
+
+/* ---------- Virtualized list ----------
+   One continuous card; day/group headers and post rows are flat, absolutely-
+   positioned siblings (see SchedulerScreen's useWindowVirtualizer) so a plan
+   with thousands of posts only ever mounts what's near the viewport. */
+.sched-listcard {
+  /* The virtualized rows inside are absolutely positioned (left: 0 /
+     width: 100%), which positions them against the card's PADDING BOX —
+     they ignore any horizontal padding set here and touch the card edges.
+     So the card itself gets none, and each row/header carries its own
+     side padding instead (.sched-vheader / .sched-vrow below). */
+  padding: 4px 0;
+  overflow: hidden;
+}
+/* "View more" pager under the list: loads the next PAGE_SIZE posts. Same
+   card language as the list above it, with the label in the accent so it
+   reads as an action, not a leftover strip. */
+.sched-viewmore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: var(--sp-3);
+  padding: 14px var(--sp-4);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-sm);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.12s var(--ease), transform 0.12s var(--ease);
+}
+.sched-viewmore:hover {
+  background: var(--surface-2);
+}
+.sched-viewmore:active {
+  transform: scale(0.98);
+}
+.sched-viewmore svg {
+  flex: none;
+}
+.sched-viewmore__count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.sched-vheader {
+  padding: 14px var(--sp-4) 0;
+}
+.sched-vheader--first {
+  padding-top: 4px;
+}
+.sched-vrow {
+  padding: 0 var(--sp-4);
+}
+.sched-vrow--divider {
+  border-top: 1px solid var(--hairline);
+}
+.sched-day {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 0 2px 6px;
+}
+.sched-day--today {
+  color: var(--accent);
+}
+.sched-day__badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--surface);
+  background: var(--accent);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+}
+.sched-day__count {
+  margin-left: auto;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* ---------- Post rows ---------- */
+.sched-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+}
+.sched-row + .sched-row {
+  border-top: 1px solid var(--hairline);
+}
+.sched-row__bar {
+  flex: none;
+  width: 4px;
+  border-radius: 3px;
+  align-self: stretch;
+}
+.sched-row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+}
+.sched-row__top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.sched-row__idea {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sched-status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.sched-statuspick {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.sched-statuspick__select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: inherit;
+  padding: 2px 15px 2px 0;
+  margin: -2px 0;
+  cursor: pointer;
+}
+.sched-statuspick__chev {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.7;
+}
+.sched-row__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sched-row__time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.sched-row__format {
+  font-weight: 600;
+}
+/* Inline date / Today indicator — only shown in flat (non-Date sort) view,
+   where there's no day-group header to convey it. */
+.sched-row__todaypill {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.sched-row__daychip {
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+/* Pillar chip — text color set inline per-swatch via categoryTextColor()
+   (SchedulerScreen.tsx), since a single fixed --ink isn't readable across
+   every possible fill. */
+.sched-pillar {
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sched-plat {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Copy button: icon-only until it flashes "Copied". */
+.sched-copy {
+  flex: none;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease),
+    transform 0.12s var(--ease);
+}
+.sched-copy:active {
+  transform: scale(0.92);
+}
+.sched-copy--done {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+/* ---------- PostSheet ---------- */
+.postsheet-custom {
+  margin-top: var(--sp-2);
+}
+textarea.postsheet-ta {
+  min-height: 110px;
+}
+textarea.postsheet-ta--sm {
+  min-height: 56px;
+}
+.postsheet-tags {
+  margin-top: var(--sp-2);
+  padding: 8px 12px;
+  border-radius: var(--r-input);
+  background: var(--surface-2);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.postsheet-platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.postsheet-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.postsheet-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  flex: none;
+  transition: transform 0.12s var(--ease);
+}
+.postsheet-swatch:active {
+  transform: scale(0.9);
+}
+.postsheet-swatch--on {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--surface) inset;
+}
+.postsheet-swatch--auto {
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+/* ---- Photo field: device picker (primary) + URL fallback ---- */
+.postsheet-photopick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 30px 12px;
+  border: 1.5px dashed var(--hairline);
+  border-radius: var(--r-input);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.postsheet-photopick:hover,
+.postsheet-photopick:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.postsheet-photopick:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.postsheet-photopreview {
+  position: relative;
+  border-radius: var(--r-input);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  line-height: 0;
+}
+.postsheet-photopreview img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+}
+.postsheet-photopreview__remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 11px;
+  border-radius: var(--r-pill);
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+.postsheet-photopreview__remove:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.postsheet-imgpreview {
+  margin-top: var(--sp-2);
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: var(--r-input);
+  border: 1px solid var(--hairline);
+  display: block;
+}
+.postsheet-imgnote {
+  margin-top: var(--sp-2);
+}
+
+.postsheet-urlfallback {
+  margin-top: var(--sp-3);
+}
+.postsheet-urlfallback summary {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+  display: inline-block;
+}
+.postsheet-urlfallback summary::-webkit-details-marker {
+  display: none;
+}
+.postsheet-urlfallback summary::before {
+  content: "+ ";
+}
+.postsheet-urlfallback[open] summary::before {
+  content: "− ";
+}
+.postsheet-urlfallback .input {
+  margin-top: var(--sp-2);
+}
+
+/* Small post thumbnail on a scheduler row */
+.sched-row__thumb {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-input);
+  overflow: hidden;
+}
+.sched-row__thumb .postimg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Desktop ≥900px ---------- */
+@media (min-width: 900px) {
+  .sched-filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .sched-search {
+    flex: 1 1 260px;
+    margin-bottom: 0;
+  }
+  .sched-filters > .chip-row {
+    flex: 1 1 100%;
+    padding-bottom: 0;
+  }
+  .sched-filters__row {
+    flex: 1 1 100%;
+  }
+  .sched-select,
+  .sched-filters__sort {
+    flex: 0 1 220px;
+  }
+  .sched-row {
+    padding: var(--sp-3) var(--sp-1);
+  }
+  .sched-row__idea {
+    font-size: 16px;
+  }
+  .sched-copy:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+}

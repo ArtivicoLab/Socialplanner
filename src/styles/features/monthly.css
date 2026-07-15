@@ -1,0 +1,506 @@
+/* ============================================================
+   12-Month Visual Plan — month header card, at-a-glance card,
+   plan grid + side rail. All classes prefixed "mon-".
+   Imported by MonthlyScreen.tsx.
+   ============================================================ */
+
+/* ---- Month header: title + arrows + scrollable 12-month strip ---- */
+.mon-head {
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.mon-head__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.mon-head__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mon-today {
+  flex: none;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+.mon-today:hover {
+  background: var(--surface-2);
+}
+
+.mon-navbtn {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.mon-navbtn:hover {
+  background: var(--surface-2);
+}
+
+/* Scrollable strip of 12 month pills; a dot marks months with posts. */
+.mon-months {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 calc(var(--sp-2) * -1);
+  padding: 2px var(--sp-2);
+}
+
+.mon-months::-webkit-scrollbar {
+  display: none;
+}
+
+.mon-month {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 44px;
+  padding: 6px 10px 5px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.mon-month:hover {
+  background: var(--surface-2);
+}
+
+.mon-month--on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+.mon-month__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.mon-month__dot--busy {
+  background: var(--accent);
+}
+
+.mon-month--on .mon-month__dot--busy {
+  background: var(--surface);
+}
+
+/* ---- Layout: glance + plan + side rail ----
+   Phones stack in DOM order (glance, plan, side).
+   Desktop: plan takes the wide left column, glance + side rail stack right. */
+.mon-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+@media (min-width: 900px) {
+  .mon-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "plan glance"
+      "plan side";
+    gap: var(--sp-4);
+    align-items: start;
+  }
+
+  .mon-glance {
+    grid-area: glance;
+  }
+
+  .mon-plan {
+    grid-area: plan;
+  }
+
+  .mon-side {
+    grid-area: side;
+  }
+}
+
+/* ---- At a glance: published ring + pillar legend ---- */
+.mon-glance {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.mon-glance__body {
+  flex: 1;
+  /* Wrap the add button to its own row instead of squeezing the text. */
+  min-width: 140px;
+}
+
+.mon-glance__count {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.mon-glance__sub {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.mon-glance .mon-legend {
+  margin-top: var(--sp-2);
+}
+
+.mon-glance__add {
+  flex: none;
+  align-self: center;
+}
+
+/* On desktop the glance card lives in the narrow rail: give the button
+   its own full-width row under the ring. */
+@media (min-width: 900px) {
+  .mon-glance__add {
+    width: 100%;
+  }
+}
+
+.mon-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.mon-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ---- Side rail (distribution + goals) ---- */
+.mon-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.mon-side .card + .card {
+  margin-top: 0;
+}
+
+/* ---- Monthly goals checklist ---- */
+.mon-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mon-goal {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 6px 0;
+}
+.mon-goal__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.mon-goal--done .mon-goal__text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.mon-goal__del {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+}
+.mon-goal__del:hover {
+  color: var(--alert);
+  background: var(--alert-soft);
+}
+.mon-goalform {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.mon-goalform .input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Plan grid ---- */
+.mon-gridcard {
+  padding: var(--sp-3);
+}
+
+/* Horizontal scroll, same pattern as the Calendar screen: the grid keeps a
+   comfortable minimum width so cells (and their photo cards) stay big and
+   readable; on a narrow phone the whole grid scrolls sideways instead of
+   squishing the columns. */
+.mon-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: var(--sp-1);
+}
+.mon-scroll::-webkit-scrollbar {
+  height: 9px;
+}
+.mon-scroll::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+  border-radius: var(--r-pill);
+}
+.mon-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.mon-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(132px, 1fr));
+  min-width: 960px;
+}
+
+.mon-dow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-align: center;
+  padding: var(--sp-1) 0 var(--sp-2);
+}
+
+.mon-cell {
+  min-height: 120px;
+  padding: 4px;
+  border-top: 1px solid var(--hairline);
+  border-left: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mon-grid > .mon-cell:nth-child(7n + 1) {
+  border-left: none;
+}
+
+.mon-cell--out {
+  opacity: 0.35;
+}
+
+.mon-cell__date {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.mon-cell--today .mon-cell__date {
+  background: var(--accent);
+  color: var(--surface);
+}
+
+.mon-more {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  padding-left: 2px;
+}
+
+/* ---- Post mini card: a square tile like the Feed Preview's, the photo
+   (or pillar color) filling the background with labels on top. ---- */
+.mon-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.12s var(--ease);
+}
+
+.mon-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.mon-card:active {
+  transform: scale(0.96);
+}
+
+/* The photo fills the tile behind the labels. */
+.mon-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* Over a photo, drop a top+bottom scrim and flip the labels to white so
+   everything stays legible on any image (same recipe as .feed-tile--photo). */
+.mon-card--photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.34) 0%,
+    rgba(0, 0, 0, 0) 34%,
+    rgba(0, 0, 0, 0) 50%,
+    rgba(0, 0, 0, 0.56) 100%
+  );
+  pointer-events: none;
+}
+
+.mon-card > :not(.mon-card__img) {
+  position: relative;
+  z-index: 2;
+  max-width: 100%;
+}
+
+.mon-card--photo .mon-card__chip,
+.mon-card--photo .mon-card__idea,
+.mon-card--photo .mon-card__foot,
+.mon-card--photo .mon-card__plats {
+  color: #fff;
+}
+
+.mon-card--photo .mon-card__idea {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.mon-card__chip {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mon-card--photo .mon-card__chip {
+  background: color-mix(in srgb, #000 42%, transparent);
+}
+
+/* Beats the generic overlay rule above, which would relatively position it. */
+.mon-card > .mon-card__dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--surface);
+}
+
+.mon-card__idea {
+  align-self: stretch;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: auto 0;
+}
+
+.mon-card__foot {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.mon-card__time {
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+.mon-card__fmt {
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mon-card__plats {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

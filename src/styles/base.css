@@ -1,0 +1,4170 @@
+@import "./tokens.css";
+
+/* ============================================================
+   Base + iOS-native shell styling
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
+  overscroll-behavior-y: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+
+/* ---------- Themed scrollbars ----------
+   Track (background) and thumb (button) both use theme tokens, so scrollbars
+   match in light and dark. Elements that deliberately hide their scrollbar
+   (tab bar, chip rows) keep their own more-specific `scrollbar-width: none` /
+   `::-webkit-scrollbar { display: none }` rules and are unaffected. */
+* {
+  scrollbar-color: color-mix(in srgb, var(--muted) 45%, var(--surface-2)) var(--surface-2);
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface-2);
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 45%, var(--surface-2));
+  border: 3px solid var(--surface-2);
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--muted) 75%, var(--surface-2));
+  border: 3px solid var(--surface-2);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: var(--surface-2);
+}
+
+/* ---------- App frame ---------- */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  width: 100%;
+  position: relative;
+  background: transparent;
+}
+
+.app__col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.app__main {
+  flex: 1;
+  padding: 0 var(--sp-4)
+    calc(var(--sp-8) + 64px + var(--safe-bottom));
+  padding-top: calc(var(--safe-top) + 8px);
+  animation: page-in var(--dur) var(--ease);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Screen title (ledger heading: eyebrow + serif + ruled line) ---------- */
+.screen-head {
+  padding: var(--sp-2) 0 var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: var(--sp-4);
+}
+.screen-head__eyebrow {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.screen-head__title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ---------- Header (status pill + avatar) ---------- */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: calc(var(--safe-top) + 8px) var(--sp-4) 8px;
+  background: color-mix(in srgb, var(--bg) 68%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+.appbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  flex: none;
+  min-width: 0;
+}
+.appbar__brandtext {
+  white-space: nowrap;
+}
+/* Small "demo" badge so the demo indicator never bloats the big brand title. */
+.brand-demo {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+.appbar__brandimg {
+  border-radius: 6px;
+  flex: none;
+}
+.appbar__spacer {
+  flex: 1;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--surface);
+  font-weight: 700;
+  font-size: 14px;
+}
+.appbar__tour {
+  width: auto;
+  padding: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.appbar__tour span {
+  display: none;
+}
+@media (min-width: 900px) {
+  .appbar__tour {
+    padding: 6px 12px 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .appbar__tour span {
+    display: inline;
+  }
+}
+
+/* ---------- Demo mode banner ---------- */
+.demobar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: 10px var(--sp-4);
+  background: var(--accent);
+  color: var(--surface);
+}
+.demobar__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.demobar__btn {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- Update-available toast ---------- */
+.updatebar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(72px + var(--safe-bottom));
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: calc(100% - var(--sp-4) * 2);
+  padding: 10px 12px 10px 16px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--surface);
+  box-shadow: var(--shadow);
+  animation: sheet-up var(--dur) var(--ease);
+}
+.updatebar__text {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.updatebar__btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+}
+@media (min-width: 900px) {
+  /* No mobile tab bar on desktop — sit closer to the corner. */
+  .updatebar {
+    left: auto;
+    right: var(--sp-6);
+    transform: none;
+    bottom: var(--sp-6);
+  }
+}
+
+/* ---------- Sync pill ---------- */
+.syncpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.syncpill__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.syncpill--ok .syncpill__dot {
+  background: var(--success);
+}
+.syncpill--busy .syncpill__dot {
+  background: var(--accent);
+  animation: pulse 1s var(--ease) infinite;
+}
+.syncpill--off .syncpill__dot {
+  background: var(--warn);
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ---------- Bottom tab bar (iOS) ---------- */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px calc(8px + var(--safe-bottom));
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border-top: 1px solid var(--hairline);
+}
+.tabbar__btn {
+  position: relative;
+  /* every tab shares the row evenly — the Create button in the middle is the
+     only fixed-width element, so nothing ever clips off the edge */
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  transition: color 0.15s var(--ease);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tabbar__btn > span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tabbar__btn svg {
+  width: 26px;
+  height: 26px;
+}
+.tabbar__btn--active {
+  color: var(--accent);
+}
+
+/* ---------- The TikTok-style center Create button ---------- */
+.tabbar__createbtn {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 2px 6px 6px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tabbar__create {
+  position: relative;
+  width: 52px;
+  height: 34px;
+}
+/* the two signature offset layers: periwinkle left, rose right — same
+   watercolor accents as the rest of the app, not literal brand colors */
+.tabbar__create::before,
+.tabbar__create::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 44px;
+  height: 34px;
+  border-radius: 11px;
+}
+.tabbar__create::before {
+  left: 0;
+  background: var(--accent-2);
+}
+.tabbar__create::after {
+  right: 0;
+  background: var(--accent);
+}
+.tabbar__create-core {
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 44px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--ink);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  transition: transform 0.12s var(--ease);
+}
+.tabbar__createbtn:active .tabbar__create-core {
+  transform: scale(0.94);
+}
+
+/* ---------- Bottom bar rearrange mode (press-and-hold, iOS-style jiggle) ---------- */
+.tabbar__btn--editing {
+  animation: tabbar-wiggle 0.26s ease-in-out infinite;
+  touch-action: none;
+}
+.tabbar__btn--editing:nth-child(odd) {
+  animation-delay: -0.13s;
+}
+.tabbar__btn--dragging {
+  z-index: 1;
+  animation: none;
+  color: var(--accent);
+}
+@keyframes tabbar-wiggle {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+.tabbar__iconwrap {
+  position: relative;
+  display: inline-flex;
+}
+.navbadge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--alert);
+  color: var(--surface);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  z-index: 2;
+}
+.navbadge--inline {
+  position: static;
+  margin-left: auto;
+}
+.tabbar__unpin {
+  position: absolute;
+  top: -2px;
+  left: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--alert);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sm);
+  z-index: 2;
+}
+.tabbar__unpin svg {
+  width: 12px;
+  height: 12px;
+}
+.tabbar-editbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 31;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: calc(var(--safe-top) + 10px) var(--sp-4) 10px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--hairline);
+  animation: fade 0.15s var(--ease);
+}
+.tabbar-editbar__label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Coach tour scrolls targets into view via scrollIntoView; this keeps the
+   sticky appbar from covering the top of whatever it just scrolled to. */
+[data-tour] {
+  scroll-margin-top: 72px;
+}
+
+/* ---------- Cards (paper sheets: hairline border, whisper of shadow) ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-4);
+}
+.card + .card {
+  margin-top: var(--sp-3);
+}
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin: var(--sp-5) 0 var(--sp-2);
+  padding-left: 2px;
+}
+
+/* ---------- Chips ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: transform 0.12s var(--ease), background 0.15s var(--ease);
+}
+.chip:active {
+  transform: scale(0.94);
+}
+.chip--on {
+  background: var(--accent);
+  color: var(--surface);
+}
+.chip--urgent {
+  font-weight: 700;
+}
+/* Small colored icon badge for compact chip buttons (quick-capture's type/
+   category pickers). Category pastels are only safe as fills under --ink
+   (see tokens.css) — never as an icon's own stroke color, which is how the
+   type-picker icon used to nearly disappear against the cream background. */
+.qc-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--ink);
+}
+.qc-pickers {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+/* Coach-tour demo entry: a self-contained example row so the tour can show
+   the section + category pickers without the user having to type first. */
+.cal-demo-entry {
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px dashed var(--hairline);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.cal-demo-entry__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.chip-row {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  padding: 2px 0 var(--sp-2);
+  scrollbar-width: none;
+}
+.chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------- Segmented control (iOS) ---------- */
+.segmented {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: 11px;
+  padding: 3px;
+  gap: 2px;
+}
+.segmented__seg {
+  flex: 1;
+  text-align: center;
+  padding: 7px 4px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.15s var(--ease);
+  position: relative;
+  z-index: 1;
+}
+.segmented__seg--on {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Stat chips (dashboard) ---------- */
+.statgrid {
+  display: grid;
+  /* 140px is wide enough for "Left to spend" and a money value on one line;
+     on a 390px phone that leaves room for exactly 2 tracks, so the grid
+     cleanly wraps to 2x2 instead of cramming 3-up with wrapped text. */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-top: 2px solid var(--accent);
+  border-radius: var(--r-card);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  container-type: inline-size;
+  text-align: left;
+}
+.stat__value {
+  /* Money/percent values must never break mid-character ("$1,2" / "98") —
+     shrink to fit the tile's own width (not the viewport's) via a container
+     query instead of wrapping. */
+  font-size: clamp(13px, 19cqw, 24px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
+}
+.stat__label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+/* ---------- Rows / list items ---------- */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+}
+.row + .row {
+  border-top: 1px solid var(--hairline);
+}
+.row__body {
+  flex: 1;
+  min-width: 0;
+}
+.row__title {
+  font-weight: 600;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row__sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.row--done .row__title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* ---------- Checkbox (tap target) ---------- */
+.check {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--hairline);
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: all 0.18s var(--ease);
+  color: transparent;
+}
+.check--on {
+  background: var(--success);
+  border-color: var(--success);
+  color: var(--surface);
+}
+.check svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---------- FAB ---------- */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(72px + var(--safe-bottom));
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 45%, transparent);
+  z-index: 25;
+  transition: transform 0.15s var(--ease);
+}
+.fab:active {
+  transform: scale(0.9);
+}
+.fab svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* ---------- Bottom sheet ---------- */
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 40;
+  animation: fade 0.2s var(--ease);
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  z-index: 41;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  padding: var(--sp-3) var(--sp-4)
+    calc(var(--sp-6) + var(--safe-bottom));
+  box-shadow: var(--shadow);
+  max-height: 92dvh;
+  overflow-y: auto;
+  animation: sheet-up var(--dur) var(--ease);
+}
+@keyframes sheet-up {
+  from {
+    transform: translate(-50%, 100%);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+.sheet__grabber {
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--hairline);
+  margin: 0 auto var(--sp-3);
+}
+.sheet__title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: var(--sp-4);
+}
+
+/* ---------- Coach-mark tour (first-run, dashboard only) ---------- */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+}
+.tour__scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  animation: fade 0.2s var(--ease);
+}
+.tour__spot {
+  position: fixed;
+  z-index: 71;
+  border-radius: 16px;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 9999px var(--scrim);
+  pointer-events: none;
+  transition: all 0.25s var(--ease);
+}
+.tour__card {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--sp-5) + var(--safe-bottom));
+  transform: translateX(-50%);
+  width: calc(100% - var(--sp-4) * 2);
+  max-width: 380px;
+  z-index: 72;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  padding: var(--sp-4);
+  animation: sheet-up var(--dur) var(--ease);
+}
+.tour__dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--sp-3);
+}
+.tour__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hairline);
+}
+.tour__dot--on {
+  background: var(--accent);
+  width: 16px;
+  border-radius: 3px;
+}
+.tour__title {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.tour__body {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 var(--sp-4);
+  line-height: 1.4;
+}
+.tour__grip {
+  width: 40px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--hairline);
+  margin: -2px auto 10px;
+  cursor: grab;
+  touch-action: none;
+}
+.tour__grip:active {
+  cursor: grabbing;
+  background: var(--muted);
+}
+.tour__demo {
+  margin: 0 0 var(--sp-4);
+}
+.tour__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.tour__actions-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.tour__actions .btn {
+  width: auto;
+  padding: 10px 20px;
+}
+
+/* ---------- Form controls ---------- */
+.field {
+  margin-bottom: var(--sp-4);
+}
+.field__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--sp-2);
+}
+.input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: var(--r-input);
+  background: var(--surface-2);
+  border: 1.5px solid transparent;
+  font-size: 16px; /* prevents iOS zoom */
+  transition: border 0.15s var(--ease);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+textarea.input {
+  resize: none;
+  min-height: 70px;
+}
+
+/* ---------- Buttons — YouTube-style solid pills, set bold ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  background: var(--surface-2);
+  color: var(--ink);
+  transition: transform 0.12s var(--ease), opacity 0.15s;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn:disabled:active {
+  transform: none;
+}
+.btn--primary {
+  background: var(--accent);
+  color: var(--surface);
+}
+.btn--danger {
+  background: var(--alert-soft);
+  color: var(--alert);
+}
+.btn--ghost {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ---------- Progress bar (slim ledger rule) ---------- */
+.pbar {
+  height: 8px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.pbar__fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.5s var(--ease);
+}
+.pbar__fill--over {
+  background: var(--alert);
+}
+
+/* ---------- Empty state ---------- */
+.empty {
+  text-align: center;
+  padding: var(--sp-8) var(--sp-4);
+  color: var(--muted);
+}
+.empty__emoji {
+  font-size: 44px;
+  margin-bottom: var(--sp-3);
+}
+.empty__title {
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.empty__sub {
+  font-size: 14px;
+}
+
+/* ---------- Utility ---------- */
+.muted {
+  color: var(--muted);
+}
+.big-number {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+.pos {
+  color: var(--success);
+}
+.neg {
+  color: var(--alert);
+}
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.stack-2 > * + * {
+  margin-top: var(--sp-2);
+}
+
+/* ---------- Shared utilities (small, single-purpose; reused across screens
+   during the inline-style → CSS-class refactor of Dashboard, Settings, Debt,
+   Calendar, Charts) ---------- */
+.flex-none {
+  flex: none;
+}
+.txt-strong {
+  font-weight: 700;
+}
+.txt-strong-800 {
+  font-weight: 800;
+}
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+.col-stack {
+  display: flex;
+  flex-direction: column;
+}
+.spread--top {
+  align-items: flex-start;
+}
+.spread--gap8 {
+  gap: var(--sp-2);
+}
+.row--pad8 {
+  padding: 8px 0;
+}
+.row--clickable {
+  cursor: pointer;
+}
+.row__title--sm {
+  font-size: 14px;
+}
+.row__title--inline {
+  /* flex (not inline-flex) + min-width:0 so the text child can shrink and
+     truncate inside .row__body instead of overflowing into the due label. */
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.row__title--inline > svg {
+  flex: none;
+}
+/* The actual title text: ellipsis on a single line. (text-overflow needs this
+   on the element that directly contains the text run, so the raw title is
+   wrapped in this span.) */
+.row__title-txt {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ic-muted {
+  color: var(--muted);
+}
+.dot-8 {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.dot-8--success {
+  background: var(--success);
+}
+.dot-9 {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+.dot-9--round {
+  border-radius: 50%;
+}
+.icon-spacer-26 {
+  width: 26px;
+  display: grid;
+  place-items: center;
+}
+.icon-spacer-26--pink {
+  color: var(--cat-pink-ink);
+}
+.icon-spacer-26--accent {
+  color: var(--accent);
+}
+.btn--stack {
+  margin-bottom: 10px;
+}
+.btn--auto {
+  width: auto;
+  flex: none;
+}
+.btn--unstyled {
+  background: none;
+}
+.card--tight {
+  padding: 4px 16px;
+}
+.field--flex {
+  flex: 1;
+}
+.fs-11 {
+  font-size: 11px;
+}
+.fs-12 {
+  font-size: 12px;
+}
+.fs-13 {
+  font-size: 13px;
+}
+.eyebrow-12 {
+  font-size: 12px;
+  font-weight: 700;
+}
+.row-label-12 {
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+.row-label-13 {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+.mt-2 {
+  margin-top: var(--sp-2);
+}
+.mt-3 {
+  margin-top: var(--sp-3);
+}
+.mt-4 {
+  margin-top: var(--sp-4);
+}
+.mt-5 {
+  margin-top: var(--sp-5);
+}
+.mt-10 {
+  margin-top: 10px;
+}
+.mb-1 {
+  margin-bottom: var(--sp-1);
+}
+.mb-2 {
+  margin-bottom: var(--sp-2);
+}
+.mb-3 {
+  margin-bottom: var(--sp-3);
+}
+.mb-4 {
+  margin-bottom: var(--sp-4);
+}
+.p-3 {
+  padding: var(--sp-3);
+}
+
+/* ---------- Dashboard hero (date · discreet clock · serif greeting) ----------
+   Redesigned: the greeting is now the headline (elegant serif), the live
+   clock demoted to a small muted line — this is a money app, not an alarm
+   clock. Ruled line underneath, like the ledger's opening page. */
+.hero {
+  padding: var(--sp-4) 0 var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: var(--sp-4);
+}
+.hero__date {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 2px 0 8px;
+  color: var(--muted);
+}
+.clock__hm {
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.clock__colon {
+  animation: clock-blink 1s steps(1, end) infinite;
+  margin: 0 1px;
+}
+@keyframes clock-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.clock__sec {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.clock__ampm {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.hero__greet {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.hero__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+  font: inherit;
+  padding: 0;
+}
+/* Dashboard greeting name: same color as the words before it; pen on hover only */
+.hero__setname {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+}
+.hero__editicon {
+  opacity: 0;
+  color: var(--muted);
+  transition: opacity 0.15s var(--ease);
+}
+.hero__setname:hover .hero__editicon,
+.hero__setname:focus-visible .hero__editicon {
+  opacity: 0.6;
+}
+.hero__addname {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  margin-left: 8px;
+}
+.hero__nameinput {
+  font: inherit;
+  font-weight: 700;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  padding: 0 2px 2px;
+  width: 8ch;
+  min-width: 5ch;
+  max-width: 12ch;
+}
+.hero__nameinput:focus {
+  outline: none;
+}
+
+/* ---------- Spreadsheet-style calendar (write in the cell) ---------- */
+/* Horizontal scroll on phones so cells stay wide + editable; fills width on desktop. */
+.cal-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0 -8px;
+  padding: 0 8px 6px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.cal-grid {
+  display: grid;
+  /* Each day column is at least 120px (readable + tappable); grows to fill wide
+     screens. When 7×120 exceeds the viewport, the .cal-scroll wrapper scrolls. */
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 4px;
+}
+.cal-head {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-cell {
+  min-height: 96px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+.cal-cell--week {
+  min-height: 200px;
+}
+.cal-cell--dim {
+  opacity: 0.5;
+}
+.cal-cell--today {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.cal-cell__head {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.cal-daynum {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+}
+.cal-cell--today .cal-daynum {
+  background: var(--accent);
+  color: var(--surface);
+}
+.cal-over7 {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--alert);
+}
+.cal-add {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.12s var(--ease), background 0.12s;
+}
+.cal-cell:hover .cal-add {
+  opacity: 1;
+}
+.cal-add:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.cal-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  text-align: left;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 3px 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.cal-item__txt {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-item--done {
+  opacity: 0.5;
+  text-decoration: line-through;
+  filter: grayscale(0.7);
+}
+.cal-more {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: left;
+  padding: 0 4px;
+}
+.cal-input {
+  width: 100%;
+  font-size: 11px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+}
+.cal-input:focus {
+  outline: none;
+}
+
+/* Touch devices can't hover — keep the + always faintly visible */
+@media (hover: none) {
+  .cal-add {
+    opacity: 0.5;
+  }
+}
+
+/* Roomier cells on desktop — this is where writing-in-cell shines */
+@media (min-width: 900px) {
+  .cal-cell {
+    min-height: 116px;
+    padding: 5px;
+  }
+  .cal-item {
+    font-size: 11px;
+    padding: 2px 5px;
+  }
+  .cal-daynum {
+    font-size: 13px;
+  }
+}
+
+/* ---------- Weekly schedule (day cards with a daily ring) ---------- */
+.week-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* phones: stack days vertically (no squish) */
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+@media (min-width: 700px) {
+  .week-grid {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  }
+}
+.weekcard {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.weekcard--today {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.weekcard__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.weekcard__num {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.weekcard__wd {
+  font-weight: 700;
+  font-size: 14px;
+}
+.weekcard__date {
+  font-size: 12px;
+  color: var(--muted);
+}
+.weekcard__ring {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 6px;
+}
+.weekcard__list {
+  padding: 4px 14px 14px;
+}
+.weekrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.weekrow + .weekrow {
+  border-top: 1px solid var(--hairline);
+}
+.weekrow__ic {
+  width: 26px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.weekrow__txt {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.weekrow--done .weekrow__txt {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.weekcard__add {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ---------- Mobile "More" hub grid ---------- */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+.hub-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-4) var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  transition: transform 0.12s var(--ease);
+}
+.hub-card:active {
+  transform: scale(0.95);
+}
+.hub-card__ico {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+}
+/* Same fix as .sidebar__ico--brand: a saturated colored badge always gets a
+   white glyph, never --ink (which flips near-black/near-white per theme and
+   reads poorly against a mid-tone fill either way). */
+.hub-card__ico--brand {
+  color: #fff;
+}
+.hub-card__label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Desktop sidebar (hidden on phone) ---------- */
+.sidebar {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .app {
+    /* Use the whole viewport width on wide screens. */
+    max-width: none;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    align-items: start;
+    gap: 0;
+  }
+  .appbar {
+    display: none;
+  }
+  .tabbar {
+    display: none;
+  }
+  .tabbar-editbar {
+    display: none;
+  }
+  .app__main {
+    padding: var(--sp-6) var(--sp-8) var(--sp-8);
+    /* Fill the content column; content-specific readable widths are set per screen. */
+    max-width: none;
+  }
+  .app__main--wide {
+    max-width: none;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    padding: var(--sp-5) var(--sp-3);
+    /* Same watercolor surface as the rest of the app — no separate dark
+       chrome. Personality comes from each nav item's own pastel icon badge
+       (see Sidebar.tsx), not one solid block of color for the whole rail. */
+    border-right: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+  .fab {
+    right: 28px;
+  }
+  /* When the sidebar first appears it eats 250px, so a 3-column bento here
+     would leave only ~200px per column and everything would cram/truncate.
+     Start at 2 columns; the 3-column mockup layout kicks in below once there's
+     real horizontal room. */
+  .app__main--wide .bento {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-4);
+    align-items: start;
+  }
+  /* The dashboard always renders exactly 3 .bento__col children (see
+     DashboardScreen.tsx), but this breakpoint only has 2 grid columns to put
+     them in — CSS grid's default auto-flow wraps the 3rd one into row 2's
+     FIRST column instead of giving it a column of its own, leaving row 2's
+     second slot empty beside it (cards visibly stuck on the left with the
+     right side blank, confirmed 2026-07 from a live screenshot at this exact
+     width). Span it full-width instead, and lay its own cards out as a row
+     so the reclaimed width is actually used rather than sitting empty above
+     a narrow, centered vertical stack. */
+  .app__main--wide .bento__col:last-child {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .app__main--wide .bento__col:last-child > * {
+    flex: 1 1 240px;
+  }
+}
+
+/* Enough width for the intended 3-column dashboard alongside the sidebar. */
+@media (min-width: 1200px) {
+  .app__main--wide .bento {
+    grid-template-columns: 1.2fr 1fr 1fr;
+  }
+  /* Back to a normal single column of its own at full 3-column width. */
+  .app__main--wide .bento__col:last-child {
+    grid-column: auto;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+  .app__main--wide .bento__col:last-child > * {
+    flex: none;
+  }
+}
+
+/* Bento base: single-column stack on mobile. Gap between cards: 16px (P3). */
+.bento {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.bento__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+/* Compact stat tiles for thin modules (Savings, Debt, Hydration, …). Tile
+   padding: 16px (P3 — cards 20px, tiles 16px). */
+.tile-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: var(--sp-3);
+}
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  min-width: 0;
+  transition: transform 0.12s var(--ease);
+}
+.tile:active {
+  transform: scale(0.97);
+}
+.tile__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.tile__value {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.tile__sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  row-gap: 4px;
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  padding: 0 var(--sp-3) var(--sp-4);
+  color: var(--ink);
+}
+.sidebar__brandtext {
+  white-space: nowrap;
+}
+.sidebar__brand img {
+  border-radius: 7px;
+  flex: none;
+}
+.sidebar__create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0 var(--sp-3) var(--sp-5);
+  padding: 11px 16px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s var(--ease), filter 0.15s;
+}
+.sidebar__create:hover {
+  filter: brightness(1.06);
+}
+.sidebar__create:active {
+  transform: scale(0.97);
+}
+.sidebar__coachbtn {
+  margin-bottom: var(--sp-2);
+  flex: none;
+}
+.sidebar__scroll {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline) transparent;
+}
+.sidebar__group {
+  margin-bottom: var(--sp-4);
+}
+.sidebar__grouptitle {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  padding: 0 var(--sp-3) 6px;
+}
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px var(--sp-3);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: background 0.12s var(--ease), color 0.12s var(--ease);
+}
+.sidebar__item:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.sidebar__item--on {
+  background: var(--accent-soft);
+  color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.sidebar__ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  flex: none;
+}
+/* Colored nav badges (see Sidebar.tsx's `color` per item) are always a
+   saturated brand hue, so the glyph on top must always be white — --ink
+   flips near-black/near-white per theme and reads poorly on a mid-tone
+   saturated fill either way. Neutral (--surface-2) badges keep --ink/--accent
+   since those backgrounds are theme-appropriate light/dark already. */
+.sidebar__ico--brand {
+  color: #fff;
+}
+.sidebar__item--on .sidebar__ico:not(.sidebar__ico--brand) {
+  color: var(--accent);
+}
+.sidebar__foot {
+  padding: var(--sp-3) var(--sp-3) 0;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sidebar .syncpill {
+  background: var(--surface-2);
+  color: var(--muted);
+  border: none;
+}
+.sidebar__version {
+  font-size: 11px;
+  color: var(--muted);
+  padding-bottom: var(--sp-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------- Task filter & sort bar ---------- */
+.filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  margin-top: var(--sp-2);
+}
+.input--sm {
+  width: auto;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--r-pill);
+}
+.filterbar__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px 4px;
+}
+.filterbar__toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+/* ---------- Task row meta (days-left, status, priority) ---------- */
+.row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+.days-badge {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 34px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.status-sel {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface-2);
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  max-width: 108px;
+  cursor: pointer;
+}
+@media (max-width: 420px) {
+  .days-badge { display: none; }
+  .status-sel { max-width: 96px; }
+}
+
+/* ---------- Task row swipe gestures (touch only) ----------
+   .swipe-row is the new list-item wrapper: .swipe-row__actions sits behind,
+   .swipe-row__content (the actual .row) sits on top and translates via an
+   inline transform driven by live touch position (see TaskRow). */
+.swipe-row {
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.swipe-row + .swipe-row {
+  border-top: 1px solid var(--hairline);
+}
+.swipe-row__actions {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  align-items: stretch;
+}
+.swipe-row__action {
+  width: 66px;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--surface);
+}
+.swipe-row__action--edit {
+  background: var(--accent);
+}
+.swipe-row__action--delete {
+  background: var(--alert);
+}
+.swipe-row__content {
+  position: relative;
+  background: var(--surface);
+  transition: transform 0.22s var(--ease);
+  border-top: none;
+}
+
+/* ---------- Dashboard hierarchy: greeting context + Today hero ---------- */
+.hero__context {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Today is the hero card: solid surface + real elevation + accent edge so it
+   ADVANCES against the pink background (a pink tint made it recede). */
+.card--today {
+  background: var(--surface);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--accent-soft);
+}
+.card--today .row__title {
+  font-size: 17px;
+}
+.today__meals {
+  margin-top: 16px;
+  background: color-mix(in srgb, var(--surface-2) 84%, var(--cat-butter));
+  border-radius: 12px;
+  padding: var(--sp-4);
+}
+
+/* ---------- Budget dashboard: Overview grid + Cash Flow rows ---------- */
+.ov-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  margin-top: 12px;
+}
+.ov-cell__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+}
+.ov-cell__value {
+  font-size: 15px;
+  font-weight: 700;
+}
+.ov-cell__input {
+  width: 100%;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--hairline);
+}
+.ov-cell__input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.cf-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px 0;
+  font-size: 14px;
+}
+.cf-row + .cf-row {
+  border-top: 1px solid var(--hairline);
+}
+.cf-row--total {
+  font-weight: 800;
+  padding-top: 12px;
+  /* the ledger "sum" rule: a double line above the total row */
+  border-top: 3px double color-mix(in srgb, var(--ink) 55%, var(--surface)) !important;
+}
+.cf-row__label {
+  flex: 1;
+  min-width: 0;
+}
+.cf-row__col {
+  width: 84px;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- HelpTip: the "(?)" affordance next to titles/labels ---------- */
+.helptip {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.helptip__btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+.helptip__btn:active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.helptip__btn svg {
+  width: 12px;
+  height: 12px;
+}
+.helptip__bubble {
+  /* position: fixed + JS-measured left/top/bottom (see HelpTip.tsx) keeps this
+     bubble clamped inside the viewport no matter where its icon sits. */
+  position: fixed;
+  z-index: 50;
+  width: max-content;
+  max-width: min(240px, calc(100vw - 24px));
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: var(--shadow);
+  animation: fade 0.15s var(--ease);
+}
+.cf-head {
+  display: flex;
+  gap: var(--sp-3);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--hairline);
+}
+.cf-head .cf-row__label {
+  font-size: 11px;
+}
+.cf-head .cf-row__col {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ============================================================
+   Below: classes added while converting inline style={{}} JSX
+   attributes to CSS classes in DashboardScreen, SettingsScreen,
+   DebtScreen, CalendarScreen and Charts.tsx. Grouped per screen.
+   ============================================================ */
+
+/* ---- Dashboard ---- */
+.section-title--flush {
+  margin: 0;
+}
+.section-title--compact {
+  margin: 0 0 var(--sp-3);
+}
+.section-title--tight8 {
+  margin: 0 0 var(--sp-2);
+}
+.section-title--accent2 {
+  color: var(--accent-2);
+}
+.section-title--warn {
+  color: var(--warn);
+}
+.section-title--success {
+  color: var(--success);
+}
+.section-title--accent {
+  color: var(--accent);
+}
+.section-title--alert {
+  color: var(--alert);
+}
+.muted-sub {
+  font-size: 13px;
+  margin-top: var(--sp-1);
+}
+.dash-today__head {
+  margin-bottom: var(--sp-3);
+}
+.dash-ring-label--empty {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.dash-ring-label {
+  font-size: 12px;
+  font-weight: 800;
+}
+.dash-overdue {
+  padding: 0 0 10px;
+}
+.dash-overdue__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--alert);
+}
+.dash-duelabel--alert {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--alert);
+  flex: none;
+}
+.dash-more-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 4px 0 0;
+}
+.priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.dash-nextup {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.dash-eyebrow-11 {
+  font-size: 11px;
+  font-weight: 700;
+}
+.dash-nextup__title {
+  font-size: 14px;
+  margin-top: 2px;
+}
+.dash-nextup__due {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  flex: none;
+}
+.dash-upcoming {
+  padding: 10px 0 6px;
+}
+.dash-upcoming-row {
+  opacity: 0.75;
+}
+.dash-checkbox-spacer {
+  width: 26px;
+}
+.dash-upcoming__due {
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+.dash-mealslink {
+  padding: 6px 0;
+}
+.dash-mealrow {
+  font-size: 13px;
+  padding: 3px 0;
+}
+.dash-mealrow__slot {
+  text-transform: capitalize;
+}
+.dash-viewlink {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  flex: none;
+  white-space: nowrap;
+}
+.dash-leftspend-label {
+  font-size: 12px;
+  margin-top: 6px;
+}
+.dash-groupbars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.dash-group-over {
+  font-weight: 700;
+}
+.dash-billrow {
+  padding: 6px 0;
+  font-size: 14px;
+}
+.dash-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dash-habit-icon {
+  width: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+.tile__value--success {
+  color: var(--success);
+}
+.tile__value--sky {
+  color: var(--cat-sky-ink);
+}
+.dash-tile-suffix {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* ---- Settings ---- */
+.settings-connected-row {
+  padding: 2px 0 10px;
+}
+.settings-connected-label {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.settings-card-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.settings-hint {
+  font-size: 13px;
+  margin-bottom: var(--sp-3);
+}
+.settings-hint--sm {
+  font-size: 12px;
+  margin-top: 6px;
+}
+.settings-setup-note {
+  background: var(--accent-soft);
+  font-size: 13px;
+}
+.settings-error {
+  font-size: 13px;
+  margin-top: 10px;
+}
+.field--flush {
+  margin-bottom: 0;
+}
+.field__label--flush {
+  margin: 0;
+}
+.settings-name-input {
+  max-width: 240px;
+}
+.settings-currency-input {
+  width: 100px;
+}
+.settings-time-input {
+  width: 140px;
+}
+.chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.chip--removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip__remove {
+  display: flex;
+}
+.input--shrink {
+  min-width: 0;
+}
+.settings-list-empty {
+  font-size: 13px;
+  padding: 10px 0;
+}
+.settings-pin-note {
+  font-size: 12px;
+  padding: 10px 0;
+}
+.settings-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.settings-chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding-bottom: 10px;
+}
+.settings-sheet-note {
+  font-size: 13px;
+  margin-bottom: var(--sp-4);
+}
+.settings-navrow-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.hub-card__ico--sm {
+  width: 30px;
+  height: 30px;
+}
+.settings-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+.settings-checkbox--sub {
+  flex: none;
+  margin-top: 3px;
+}
+.settings-footer {
+  text-align: center;
+  margin: 24px 0 8px;
+}
+.settings-footer__link {
+  font-size: 13px;
+  font-weight: 600;
+}
+.settings-checklist__sub {
+  font-size: 12px;
+}
+.settings-category-input {
+  width: 140px;
+  padding: 7px 12px;
+}
+.settings-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex: none;
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s var(--ease);
+}
+.settings-swatch:active {
+  transform: scale(0.9);
+}
+.settings-swatch--sm {
+  width: 14px;
+  height: 14px;
+  box-shadow: none;
+  border: 1px solid var(--hairline);
+}
+
+/* ---- Debt ---- */
+.debt-total-value {
+  font-weight: 800;
+  font-size: 22px;
+}
+.debt-order-num {
+  width: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ic-rotate-up {
+  transform: rotate(-90deg);
+}
+.ic-rotate-down {
+  transform: rotate(90deg);
+}
+.debt-row-btn {
+  background: none;
+  text-align: left;
+  flex: 1;
+}
+.debt-notes {
+  font-size: 12px;
+  margin-top: 2px;
+  font-style: italic;
+}
+.debt-actions {
+  display: flex;
+  gap: 6px;
+}
+.debt-schedule__head {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 0 6px;
+}
+.debt-col-month {
+  flex: 1;
+}
+.debt-col-amt {
+  width: 84px;
+  text-align: right;
+}
+.debt-col-bal {
+  width: 90px;
+  text-align: right;
+}
+.debt-schedule__row {
+  font-size: 13px;
+  padding: 7px 0;
+  border-top: 1px solid var(--hairline);
+}
+.debt-extra-row {
+  margin-top: 14px;
+}
+.debt-extra-input {
+  width: 110px;
+  text-align: right;
+}
+.debt-overview__stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+.debt-overview__statgrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+.debt-schedule-scroll {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+.col-stack--wide {
+  min-width: 480px;
+}
+.debt-col-adj {
+  width: 108px;
+  display: inline-flex;
+  justify-content: flex-end;
+}
+.debt-adj {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.debt-adj__btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+.debt-adj__val {
+  min-width: 46px;
+  text-align: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.debt-adj__val.pos {
+  color: var(--success);
+}
+.debt-detail-schedule {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* ---- New-year rollover (period sheet) ---- */
+.rollover-head {
+  margin-top: 20px;
+}
+.rollover-note {
+  font-size: 12px;
+  margin: -4px 0 12px;
+}
+.rollover-row {
+  align-items: flex-end;
+  gap: 12px;
+}
+.rollover-field {
+  flex: 1;
+  margin-bottom: 0;
+}
+.rollover-btn {
+  width: auto;
+  white-space: nowrap;
+}
+
+/* ---- Transactions ---- */
+.statgrid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+.txn-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.txn-filters__field {
+  flex: 1;
+  margin-bottom: 0;
+}
+.txn-filters__dates {
+  gap: 12px;
+}
+.txn-list {
+  padding: 4px 16px;
+}
+.txn-row {
+  width: 100%;
+  text-align: left;
+  background: none;
+}
+.txn-row__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+.txn-row__amt {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.txn-row__amt.pos {
+  color: var(--success);
+}
+.txn-paid-row {
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+/* ---- Accounts ---- */
+.statgrid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.ledger--accounts {
+  min-width: 640px;
+}
+.ledger__rowbtn {
+  cursor: pointer;
+}
+.ledger__rowbtn:hover td {
+  background: var(--surface-2);
+}
+.ledger td.pos {
+  color: var(--success);
+}
+.acct-type {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+/* ---- Net worth ---- */
+.nw-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.nw-hero__body {
+  flex: 1;
+  min-width: 0;
+}
+.nw-hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.nw-avl {
+  margin-top: 4px;
+}
+
+/* ---- Smart calendar ---- */
+/* ---------- Smart Calendar — "ledger planner" redesign ----------
+   Hero masthead, ruled month grid (hairline rules via a 1px-gap grid over a
+   hairline background — no boxy per-cell borders) with a week-margin sum
+   column on desktop, and a mini-grid + agenda on phones. */
+.ic-flip {
+  transform: scaleX(-1);
+}
+.smcal-hero__mast {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+.smcal-navbtn {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  transition: background 0.15s var(--ease), transform 0.12s var(--ease);
+}
+.smcal-navbtn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.smcal-navbtn:active {
+  transform: scale(0.92);
+}
+.smcal-hero__title {
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.smcal-hero__month {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.smcal-todaybtn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 3px 12px;
+  border-radius: var(--r-pill);
+}
+.smcal-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+.smcal-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.smcal-stat__label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.smcal-stat__value {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.smcal-kchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.smcal-kchip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 11px;
+  border-radius: 9px;
+  font-size: 12px;
+  /* fixed dark ink: the category pastels are light in the light theme and
+     mid-tone in the dark theme, so a dark label passes contrast on BOTH —
+     var(--ink) would flip to cream and fail on the dark pastels. */
+  color: #26231e;
+  font-variant-numeric: tabular-nums;
+}
+.smcal-kchip__label {
+  font-weight: 700;
+}
+.smcal-kchip__amt {
+  font-weight: 800;
+}
+
+/* ---- The ruled ledger grid: roomy day columns, scrolls on the x-axis at
+   every screen size (real estate over squeezing) ---- */
+.smcal-card {
+  padding: var(--sp-3);
+}
+.smcal-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.smcal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(200px, 1fr)) minmax(112px, 132px);
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 1540px;
+}
+.smcal-dow {
+  background: var(--surface-2);
+  padding: 7px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.smcal-dow--wk {
+  text-align: right;
+}
+.smcal-cell {
+  min-height: 118px;
+  background: var(--surface);
+  padding: 7px 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: stretch;
+  text-align: left;
+  transition: background 0.12s var(--ease);
+}
+.smcal-cell:hover {
+  background: color-mix(in srgb, var(--accent-soft) 30%, var(--surface));
+}
+.smcal-cell--out {
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+}
+.smcal-cell--out .smcal-daynum,
+.smcal-cell--out .smcal-ev {
+  opacity: 0.45;
+}
+.smcal-cell--today {
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+}
+.smcal-cell__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.smcal-daynum {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.smcal-add {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.12s var(--ease), background 0.12s var(--ease);
+}
+.smcal-cell:hover .smcal-add,
+.smcal-add:focus-visible {
+  opacity: 1;
+}
+.smcal-add:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+@media (hover: none) {
+  .smcal-add {
+    opacity: 0.45;
+  }
+}
+.smcal-cellinput {
+  width: 100%;
+  font-size: 12px;
+  padding: 4px 6px;
+  margin-top: 2px;
+  border-radius: 6px;
+  border: 1.5px solid var(--accent);
+  background: var(--surface);
+}
+.smcal-cellinput:focus {
+  outline: none;
+}
+.smcal-cell--today .smcal-daynum {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+.smcal-ev {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+.smcal-ev--paid {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+/* kind tick: a slim vertical rule — solid = logged, dashed = planned */
+.smcal-ev__tick {
+  width: 3px;
+  height: 13px;
+  border-radius: 2px;
+  flex: none;
+  align-self: center;
+}
+.smcal-ev__tick--planned {
+  width: 0;
+  background: transparent;
+  border-left: 3px dashed;
+  border-radius: 0;
+}
+.smcal-ev__name {
+  flex: 1;
+  min-width: 0;
+  /* roomy columns + x-scroll = never truncate; wrap in the rare overflow */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.smcal-ev__amt {
+  flex: none;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.smcal-more {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 1px;
+}
+/* the ledger's margin column: each week's sums */
+.smcal-wksum {
+  background: color-mix(in srgb, var(--surface-2) 60%, var(--surface));
+  padding: 8px 9px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.smcal-wksum__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+.smcal-wksum__row > span:first-child {
+  color: var(--muted);
+  font-weight: 600;
+}
+.smcal-wksum__row--net {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 3px double color-mix(in srgb, var(--ink) 45%, var(--surface));
+}
+.smcal-wksum--empty {
+  justify-content: center;
+  align-items: center;
+}
+.smcal-wksum__dash {
+  color: var(--muted);
+}
+
+/* ---- Phone companions: agenda + weekly balances (hidden ≥900px) ---- */
+.smcal-agenda {
+  padding: 2px var(--sp-4);
+}
+.smcal-agenda__empty {
+  font-size: 14px;
+  padding: 14px 0;
+}
+.smcal-aday {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 0;
+}
+.smcal-aday + .smcal-aday {
+  border-top: 1px solid var(--hairline);
+}
+.smcal-aday__rail {
+  flex: none;
+  width: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.smcal-aday__num {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.smcal-aday__wd {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.smcal-aday__rail--today .smcal-aday__num,
+.smcal-aday__rail--today .smcal-aday__wd {
+  color: var(--accent);
+}
+.smcal-aday__list {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 3px;
+}
+.smcal-aday__list .smcal-ev {
+  font-size: 13.5px;
+}
+
+@media (min-width: 900px) {
+  .smcal-mobile {
+    display: none;
+  }
+  .smcal-hero__month {
+    font-size: 28px;
+  }
+}
+
+/* ---- Spending trend (3-month compare) ---- */
+.smcal-compare {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  height: 158px;
+}
+.smcal-compare__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  gap: 6px;
+}
+.smcal-compare__amt {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.smcal-compare__track {
+  flex: 1;
+  width: 100%;
+  max-width: 76px;
+  display: flex;
+  align-items: flex-end;
+}
+.smcal-compare__bar {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  min-height: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-bottom: none;
+  transition: height 0.2s ease;
+}
+.smcal-compare__col--cur .smcal-compare__bar {
+  background: var(--accent);
+  border-color: transparent;
+}
+.smcal-compare__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.smcal-compare__col--cur .smcal-compare__label {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* ---- Weekly balance card (phone) + day sheet rows ---- */
+.smcal-weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.smcal-week {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.smcal-week:first-child {
+  border-top: none;
+}
+.smcal-week__label {
+  min-width: 64px;
+  color: var(--muted);
+}
+.smcal-dayrow {
+  gap: 12px;
+}
+.smcal-dayrow__amt {
+  width: 92px;
+  text-align: right;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  background: var(--surface-2);
+  font-weight: 700;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.smcal-dayrow__amt:focus {
+  outline: 1.5px solid var(--accent);
+}
+.smcal-dayrow__del {
+  display: flex;
+  padding: 4px;
+  flex: none;
+}
+.smcal-sheetadd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.smcal-sheetadd__row {
+  display: flex;
+  gap: 8px;
+}
+.smcal-sheetadd .input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Setup wizard ---- */
+.wizard-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.wizard-dot {
+  height: 4px;
+  flex: 1;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.wizard-dot--on { background: var(--accent); }
+.wizard-dot--done { background: var(--success); }
+.wizard-income-row {
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.wizard-amt {
+  width: 110px;
+  text-align: right;
+  flex: none;
+}
+.wizard-bill-row {
+  padding: 8px 0;
+  align-items: center;
+  cursor: pointer;
+  border-top: 1px solid var(--hairline);
+}
+.wizard-bill-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+.wizard-actions {
+  align-items: center;
+  margin-top: 20px;
+}
+.wizard-actions__right {
+  display: flex;
+  gap: 10px;
+}
+
+/* ---- Paycheck headline strip ---- */
+.budget-strip-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.budget-strip {
+  flex: 1;
+  padding: 0;
+}
+
+/* ---- Monthly to-do checklist ---- */
+.checklist-head {
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.checklist-pbar {
+  flex: 1;
+  max-width: 200px;
+}
+.checklist-row {
+  gap: 12px;
+}
+.checklist-label {
+  flex: 1;
+}
+.checklist-label--done {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.checklist-remove {
+  flex: none;
+  opacity: 0.5;
+}
+.checklist-remove:hover {
+  opacity: 1;
+}
+.checklist-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.checklist-add .input {
+  flex: 1;
+}
+.checklist-addbtn {
+  width: auto;
+  white-space: nowrap;
+}
+
+/* ---- Recurring ---- */
+.txn-row--done {
+  opacity: 0.55;
+}
+.txn-row--done .txn-row__amt {
+  text-decoration: line-through;
+}
+.rec-log {
+  flex: none;
+}
+.rec-logged {
+  flex: none;
+  display: inline-flex;
+  color: var(--success);
+}
+
+/* ---- 50/30/20 framework ---- */
+.fw-ratios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+}
+.fw-ratio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fw-ratio__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+.fw-ratio__input {
+  width: 64px;
+  text-align: right;
+}
+.fw-warn {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--warn);
+  font-weight: 600;
+}
+.fw-over {
+  color: var(--warn);
+}
+.bucket-chip {
+  flex: none;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 3px 7px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* ---- Distribution ---- */
+.dist-stack-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+}
+.dist-stack {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  height: 180px;
+}
+.dist-stack__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  gap: 6px;
+  min-width: 0;
+}
+.dist-stack__amt {
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.dist-stack__bar-wrap {
+  flex: 1;
+  width: 100%;
+  max-width: 56px;
+  display: flex;
+  align-items: flex-end;
+}
+.dist-stack__bar {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  overflow: hidden;
+  min-height: 3px;
+}
+.dist-stack__seg {
+  width: 100%;
+}
+.dist-stack__label {
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.dist-memberbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 16px;
+}
+.dist-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ---- Calendar ---- */
+.cal-navchip {
+  padding: 8px;
+}
+.cal-navchip--prev {
+  transform: scaleX(-1);
+}
+.cal-nav-title {
+  font-weight: 800;
+  font-size: 17px;
+}
+.cal-monthcard {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+}
+.cal-item-repeat-ic {
+  flex: none;
+  opacity: 0.7;
+}
+.weekcard__pct {
+  font-size: 18px;
+  font-weight: 800;
+}
+.weekcard__pct-sub {
+  font-size: 10px;
+}
+.weekcard__empty {
+  font-size: 13px;
+  padding: 6px 0;
+}
+.weekrow__ic--goal {
+  color: var(--cat-pink-ink);
+}
+.cal-quickadd-gap {
+  margin-top: 6px;
+}
+.cal-hint {
+  font-size: 12px;
+  margin: 12px 2px;
+}
+.cal-daysheet__empty {
+  padding: 8px 0 16px;
+}
+.daydetail__count {
+  font-size: 28px;
+}
+.daydetail__pct {
+  font-size: 14px;
+  font-weight: 800;
+}
+.daydetail__empty {
+  font-size: 14px;
+  padding: 6px 0;
+}
+.daydetail__row-btn {
+  text-align: left;
+  background: none;
+}
+
+/* ---- Charts ---- */
+.chart-donut {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.chart-donut__ring {
+  position: relative;
+  flex: none;
+  border-radius: 50%;
+}
+.chart-donut__hole {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.chart-donut__legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 120px;
+}
+.chart-donut__slice-label {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+}
+.chart-donut__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.chart-statusbar__track {
+  display: flex;
+  height: 12px;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.chart-statusbar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 10px;
+}
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.dot-9--accent {
+  background: var(--accent);
+}
+.dot-9--accent2 {
+  background: var(--accent-2);
+}
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chart-groupedbars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.chart-groupedbars__legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+}
+.chart-groupedbars__label {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pbar__fill--budget {
+  background: var(--accent);
+}
+.pbar__fill--actual {
+  background: var(--accent-2);
+}
+.chart-columns {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+.chart-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.chart-column__bar {
+  width: 100%;
+  max-width: 26px;
+  border-radius: 6px;
+}
+.chart-column__label {
+  font-size: 9px;
+}
+
+/* ---- Chart hover: crosshair + instant value bubble (all charts) ---- */
+.charttip-host {
+  position: relative;
+}
+.charttip {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--surface);
+  border-radius: 10px;
+  padding: 7px 10px;
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  animation: fade 0.1s var(--ease);
+}
+.charttip__title {
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
+  margin-bottom: 3px;
+}
+.charttip__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.charttip__swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  flex: none;
+}
+.charttip__label {
+  opacity: 0.8;
+}
+.charttip__val {
+  font-weight: 800;
+  margin-left: auto;
+  padding-left: 10px;
+}
+.chart-crosshair {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--muted);
+  opacity: 0.65;
+  pointer-events: none;
+}
+.linechart__dot--hot {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid;
+  pointer-events: none;
+  z-index: 2;
+}
+.chart-column__bar--hot {
+  filter: brightness(1.12);
+  outline: 1px solid var(--hairline);
+}
+
+/* ---- Line chart (financial): dots + rotated segments + clip-path area ---- */
+.linechart__plot {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.linechart__grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--hairline);
+  pointer-events: none;
+}
+.linechart__ylabel {
+  position: absolute;
+  left: 0;
+  top: -8px;
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--surface);
+  padding-right: 4px;
+}
+/* Axis variant: sits in the reserved left gutter, vertically centered on its
+   grid line, so bars/line never cover it. */
+.linechart__ylabel--axis {
+  top: 0;
+  transform: translateY(-50%);
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.annual-alloc-cap {
+  margin: -4px 0 8px;
+}
+.linechart__area {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  pointer-events: none;
+}
+.linechart__seg {
+  position: absolute;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 2px;
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+.linechart__dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 2px var(--shadow-sm);
+  cursor: default;
+  transition: transform 0.12s ease;
+}
+.linechart__dot:hover {
+  transform: scale(1.5);
+}
+.linechart__xlabel {
+  position: absolute;
+  top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.linechart__legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 6px;
+}
+.dash-chart-head {
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.dash-chart-head .segmented {
+  font-size: 12px;
+}
+
+/* ---- Combo chart bars + shared swatch ---- */
+.combochart__bar {
+  position: absolute;
+  border-radius: 4px 4px 0 0;
+  opacity: 0.9;
+  transition: opacity 0.12s ease;
+}
+.combochart__bar:hover {
+  opacity: 1;
+}
+.combochart__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* ---- Yahoo-style area chart ---- */
+.areachart__plot {
+  position: relative;
+  width: 100%;
+}
+.areachart__grid {
+  position: absolute;
+  left: 0;
+  height: 0;
+  border-top: 1px solid var(--hairline);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.areachart__ylabel {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--muted);
+}
+.areachart__area {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  pointer-events: none;
+}
+/* Continuous line drawn as ONE clip-path ribbon (no segment joints/gaps). */
+.areachart__line,
+.linechart__line {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.areachart__seg {
+  position: absolute;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 2px;
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+.areachart__refline {
+  position: absolute;
+  left: 0;
+  height: 0;
+  border-top: 1px dashed var(--muted);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.areachart__pill {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.areachart__pill--last {
+  color: var(--surface);
+}
+.areachart__pill--ref {
+  background: var(--surface-2);
+  color: var(--muted);
+  font-weight: 600;
+}
+.areachart__endring {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 1px solid;
+  opacity: 0.28;
+  pointer-events: none;
+}
+.areachart__enddot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface);
+  pointer-events: none;
+}
+
+/* ---- 100% stacked bar chart ---- */
+.stacked100 {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.stacked100__col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.stacked100__bar {
+  width: 100%;
+  max-width: 34px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.stacked100__seg {
+  width: 100%;
+  transition: filter 0.12s ease;
+}
+.stacked100__seg:hover {
+  filter: brightness(1.08);
+}
+.stacked100__label {
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ---- Annual "Year Overview" dashboard ---- */
+.annual-range {
+  align-items: center;
+  margin-bottom: 14px;
+}
+.annual-range__btn {
+  width: auto;
+  padding: 6px 10px;
+}
+.annual-range__label {
+  font-weight: 700;
+  font-size: 15px;
+}
+.annual-tile {
+  position: relative;
+}
+.annual-tile__dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.annual-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 14px 20px;
+  padding: 16px;
+}
+.annual-strip__item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 90px;
+}
+.annual-strip__label {
+  font-size: 12px;
+}
+.annual-strip__val {
+  font-weight: 800;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.annual-strip__val.neg {
+  color: var(--alert);
+}
+.annual-kindchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.annual-kindchip {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+.annual-kindchip--on {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+}
+
+/* ---- Ledger table (cash-flow summary) ---- */
+.ledger-scroll {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+.ledger {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.ledger th,
+.ledger td {
+  padding: 8px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+.ledger thead th {
+  color: var(--muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--hairline);
+}
+.ledger tbody td {
+  border-bottom: 1px solid var(--hairline);
+}
+.ledger__monthcol {
+  text-align: left !important;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  font-weight: 600;
+}
+.ledger td.neg {
+  color: var(--alert);
+}
+.ledger__total td {
+  font-weight: 800;
+  border-top: 2px solid var(--hairline);
+  padding-top: 10px;
+}
+.ledger__avg td {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ---- Top spending categories (ranked bars) ---- */
+.topcat {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.topcat__row {
+  display: grid;
+  grid-template-columns: 18px minmax(70px, 1.1fr) 2fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.topcat__rank {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  text-align: center;
+}
+.topcat__name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topcat__barwrap {
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.topcat__bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  min-width: 3px;
+}
+.topcat__amt {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+.chart-stackedcolumns__legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.chart-stackedcolumns__bar {
+  width: 100%;
+  max-width: 26px;
+  display: flex;
+  flex-direction: column-reverse;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.chart-stackedcolumns__seg {
+  flex: none;
+}
+
+/* ---- Recurring price versioning (price history + change dialog) ---- */
+.rec-price-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 12px;
+}
+.rec-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+.rec-delta--up {
+  color: var(--alert);
+  background: color-mix(in srgb, var(--alert) 12%, transparent);
+}
+.rec-delta--down {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+/* Price-history timeline inside the edit sheet */
+.price-timeline {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.price-timeline__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  position: relative;
+}
+.price-timeline__row:not(:last-of-type)::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 22px;
+  bottom: -5px;
+  width: 2px;
+  background: var(--border, rgba(0, 0, 0, 0.12));
+}
+.price-timeline__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
+  z-index: 1;
+}
+.price-timeline__row--current .price-timeline__dot {
+  background: var(--accent);
+}
+.price-timeline__amt {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.price-timeline__range {
+  font-size: 12px;
+}
+
+/* "What happened?" price-change dialog */
+.pc-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pc-summary__new {
+  color: var(--accent);
+}
+.pc-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid var(--border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.pc-opt--on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.pc-opt__radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  flex: none;
+  margin-top: 2px;
+}
+.pc-opt--on .pc-opt__radio {
+  border-color: var(--accent);
+  background: radial-gradient(circle at center, var(--accent) 0 5px, transparent 6px);
+}
+.pc-opt__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pc-opt__title {
+  font-weight: 700;
+}
+.pc-opt__sub {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+/* Virtualized transaction ledger (#22) — fixed row height keeps the windowing
+   math exact; the container scrolls internally so the DOM stays tiny at 10k+. */
+.txn-vlist {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0 16px;
+}
+.txn-vlist .txn-row {
+  height: 68px;
+  box-sizing: border-box;
+}
+
+/* Settings → Household members */
+.settings-member-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+.settings-member-row .input--shrink {
+  flex: 1;
+}
+.settings-member-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+/* Settings → Help & guide list */
+.help-list {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.help-list li {
+  padding-left: 2px;
+}

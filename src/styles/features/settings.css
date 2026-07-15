@@ -1,0 +1,47 @@
+/* Settings screen additions — Social Planner-specific bits only, prefixed set-.
+   The shared settings-* classes already live in base.css and are reused as-is. */
+
+/* Platforms manager rows */
+.set-platform-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.set-platform-row .input--shrink {
+  flex: 1;
+  min-width: 0;
+}
+.set-platform-row__reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: none;
+}
+.set-platform-row__move {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 18px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+}
+.set-platform-row__move:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.set-platform-row__active {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+/* Fresh-year sheet checkboxes */
+.set-reset-option {
+  align-items: center;
+  gap: 12px;
+}

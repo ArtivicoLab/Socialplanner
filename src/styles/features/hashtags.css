@@ -1,0 +1,267 @@
+/* ============================================================
+   Hashtag Manager screen (imported by HashtagsScreen.tsx).
+   All classes prefixed "hash-". Each card exposes its group color
+   as --tint (set inline); tint is used sparingly: the icon swatch,
+   a soft wash on the tag chips, and the card's top edge.
+   ============================================================ */
+
+/* ---- Summary strip ---- */
+.hash-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.hash-stat {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: 10px var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.hash-stat__num {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.hash-stat__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Search ---- */
+.hash-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 0 var(--sp-4);
+  height: 40px;
+  margin-bottom: var(--sp-3);
+  color: var(--muted);
+}
+.hash-search:focus-within {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.hash-search__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.hash-search__input::placeholder {
+  color: var(--muted);
+}
+
+/* ---- Grid ---- */
+.hash-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+@media (min-width: 700px) {
+  .hash-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    align-items: start;
+  }
+}
+.hash-none {
+  font-size: 14px;
+  padding: var(--sp-2) var(--sp-1);
+}
+
+/* ---- Group card ---- */
+.hash-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  overflow: hidden;
+  transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+.hash-card::before {
+  /* thin color edge along the top instead of a heavy tinted band */
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--tint);
+}
+@media (hover: hover) {
+  .hash-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+}
+.hash-grid .hash-card + .hash-card {
+  margin-top: 0; /* the grid gap handles spacing, not the .card+.card rule.
+  Scoped under .hash-grid for higher specificity than base.css's own
+  `.card + .card`, which otherwise ties and can win depending on Vite's
+  dev-mode <style> injection order. */
+}
+
+.hash-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hash-card__swatch {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+}
+.hash-card__titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.hash-card__name {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hash-card__meta {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hash-card__actions {
+  flex: none;
+  display: flex;
+  gap: 4px;
+}
+.hash-ghost {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: transparent;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease),
+    transform 0.12s var(--ease);
+}
+.hash-ghost:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.hash-ghost:active {
+  transform: scale(0.92);
+}
+.hash-ghost--danger:hover {
+  background: var(--alert-soft);
+  color: var(--alert);
+}
+
+/* ---- Tag chips ---- */
+.hash-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hash-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--tint, var(--accent)) 12%, var(--surface-2));
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hash-tag--more {
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed var(--hairline);
+  cursor: pointer;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.hash-tag--more:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
+.hash-card__none {
+  font-size: 13px;
+}
+
+/* ---- Copy-all: the card's primary action, full width ---- */
+.hash-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px var(--sp-3);
+  border-radius: var(--r-input);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  font-size: 13px;
+  font-weight: 700;
+  transition: transform 0.12s var(--ease), background 0.15s var(--ease),
+    color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.hash-copy:hover {
+  border-color: var(--muted);
+}
+.hash-copy:active {
+  transform: scale(0.98);
+}
+.hash-copy:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.hash-copy--copied {
+  background: var(--success-soft);
+  border-color: transparent;
+  color: var(--success);
+}
+
+/* ---- Add/edit sheet ---- */
+.hash-sheet__tags {
+  min-height: 110px;
+}
+.hash-sheet__hint {
+  font-size: 12px;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.hash-sheet__warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+.hash-sheet__preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 96px;
+  overflow-y: auto;
+}
