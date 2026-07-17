@@ -155,10 +155,14 @@ h3 {
   line-height: 1.1;
 }
 
-/* ---------- Header (status pill + avatar) ---------- */
+/* ---------- Header (status pill + avatar) ----------
+   Scrolls away with the page on phone/narrow window instead of staying
+   pinned — it's just brand/sync-status/avatar, nothing worth permanently
+   eating screen space for. Moot at ≥900px: .appbar is display: none there,
+   the sidebar owns desktop chrome instead (see the big layout media query
+   further down this file). */
 .appbar {
-  position: sticky;
-  top: 0;
+  position: static;
   z-index: 20;
   display: flex;
   align-items: center;
@@ -222,6 +226,11 @@ h3 {
   display: none;
 }
 @media (min-width: 900px) {
+  /* .appbar itself is display: none at this width (see the big desktop
+     layout media query below) — the sidebar owns desktop chrome instead —
+     so no positioning override belongs here, only the two rules below,
+     which describe what .appbar would look like if a container query or
+     future layout ever showed it above 900px again. */
   .appbar__tour {
     padding: 6px 12px 6px 10px;
     font-size: 12px;
