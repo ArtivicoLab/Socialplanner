@@ -16,11 +16,17 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export function Sidebar({ active, onCoachTour }: { active: Route; onCoachTour: () => void }) {
-  const { status, connected } = useSync();
+  const { status, connected, needsReauth, busy, tapToRetry } = useSync();
   const { hiddenRoutes } = useSettings();
   const demo = useDemo((s) => s.demo);
+  // Stuck sync must always have a manual escape hatch, not just the specific
+  // reauth case — a plain "offline" (rate limit, blip, whatever) previously
+  // had no click affordance at all, which read as "pressing it does nothing."
+  const retryable = connected && !needsReauth && status === "offline";
+  const clickable = needsReauth || retryable;
   const dot =
-    status === "synced" ? "var(--success)" : status === "offline" ? "var(--warn)" : "var(--accent)";
+    needsReauth || status === "offline" ? "var(--warn)"
+    : status === "synced" ? "var(--success)" : "var(--accent)";
 
   const groups = NAV.map((group) => ({
     ...group,
@@ -93,10 +99,30 @@ export function Sidebar({ active, onCoachTour }: { active: Route; onCoachTour: (
       </button>
 
       <div className="sidebar__foot">
-        <span className="syncpill">
-          <span className="syncpill__dot" style={{ background: dot }} />
-          {connected ? STATUS_LABEL[status] : "Saved on device"}
-        </span>
+        {/* Hidden in demo mode — see Header.tsx's matching change for why:
+            the "DEMO" brand tag and the DemoBanner already say it, and this
+            pill used to keep showing "Saved"/"Synced" while demo mode was
+            on, directly contradicting the banner right above it. */}
+        {!demo && (clickable ? (
+          <button
+            className="syncpill"
+            disabled={busy}
+            onClick={() => tapToRetry()}
+            title={
+              needsReauth
+                ? "Your Google connection lapsed after being idle a while. Tap to sign in again, nothing was lost"
+                : "Tap to retry syncing now"
+            }
+          >
+            <span className="syncpill__dot" style={{ background: dot }} />
+            {busy ? (needsReauth ? "Reconnecting…" : "Syncing…") : needsReauth ? "Tap to reconnect" : "Offline · tap to retry"}
+          </button>
+        ) : (
+          <span className="syncpill">
+            <span className="syncpill__dot" style={{ background: dot }} />
+            {connected ? STATUS_LABEL[status] : "Saved on device"}
+          </span>
+        ))}
         <span className="sidebar__version">
           v{APP_VERSION}
           {BUILD_SHA && ` · ${BUILD_SHA}`}

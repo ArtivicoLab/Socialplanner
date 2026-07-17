@@ -15,6 +15,57 @@ interface TokenState {
 }
 let state: TokenState | null = null;
 
+// This in-memory `state` used to be ALL that backed the token — meaning a
+// page reload for ANY reason (a new deploy's service-worker auto-update, a
+// manual refresh, a backgrounded tab getting reclaimed) threw away a token
+// that might still have had real minutes of validity left, forcing a fresh
+// sign-in from zero every time even though the actual ~1hr Google token
+// wasn't expiring anywhere near that fast. Mirrored into sessionStorage
+// (survives a reload, scoped to this tab/session, gone when the tab closes —
+// same practical exposure as keeping it in a JS variable) so a reload can
+// revive a still-valid token instead of discarding it. Ported 2026-07-15
+// from TrackerA, where this was found and fixed the same way.
+const SESSION_KEY = "sp.token";
+
+function persistToken(entry: TokenState) {
+  try {
+    sessionStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify({ token: entry.token, expiresAt: entry.expiresAt, scopes: [...entry.scopes] })
+    );
+  } catch {
+    /* sessionStorage unavailable (private mode, quota) — in-memory state still covers this page load */
+  }
+}
+
+function forgetPersistedToken() {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** In-memory cache miss doesn't necessarily mean "no valid token" anymore —
+    check sessionStorage before concluding a fresh sign-in is needed. */
+function getCached(): TokenState | undefined {
+  if (state) return state;
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as { token: string; expiresAt: number; scopes: string[] };
+    if (parsed.expiresAt - Date.now() <= 60_000) {
+      forgetPersistedToken(); // expired (or near enough) — don't keep reviving a dead token
+      return undefined;
+    }
+    const revived: TokenState = { token: parsed.token, expiresAt: parsed.expiresAt, scopes: new Set(parsed.scopes) };
+    state = revived;
+    return revived;
+  } catch {
+    return undefined;
+  }
+}
+
 // GIS global (loaded from the script tag).
 declare global {
   interface Window {
@@ -68,11 +119,20 @@ export function preloadGis(): void {
 }
 
 function tokenValid(scope: string): boolean {
+  const entry = getCached();
   return (
-    !!state &&
-    state.expiresAt - Date.now() > 60_000 &&
-    scope.split(" ").every((s) => state!.scopes.has(s))
+    !!entry &&
+    entry.expiresAt - Date.now() > 60_000 &&
+    scope.split(" ").every((s) => entry.scopes.has(s))
   );
+}
+
+/** Milliseconds left before the cached token expires (0 if there is none
+    cached at all). Lets background code decide "is this worth quietly
+    refreshing now" without forcing a request. */
+export function tokenTimeLeftMs(): number {
+  const entry = getCached();
+  return entry ? Math.max(0, entry.expiresAt - Date.now()) : 0;
 }
 
 // GIS's callback is not always guaranteed to fire — e.g. with strict
@@ -107,7 +167,7 @@ export function requestToken(
       new Error("No Google client ID configured. Add VITE_GOOGLE_CLIENT_ID to your .env.")
     );
   }
-  if (tokenValid(scope)) return Promise.resolve(state!.token);
+  if (tokenValid(scope)) return Promise.resolve(getCached()!.token);
 
   return loadGis().then(
     () =>
@@ -133,11 +193,13 @@ export function requestToken(
               reject(new Error(resp.error || "Authorization was cancelled."));
               return;
             }
-            state = {
+            const entry: TokenState = {
               token: resp.access_token,
               expiresAt: Date.now() + (resp.expires_in ?? 3600) * 1000,
               scopes: new Set((resp.scope ?? scope).split(" ")),
             };
+            state = entry;
+            persistToken(entry);
             resolve(resp.access_token);
           },
         });
@@ -148,7 +210,7 @@ export function requestToken(
 }
 
 export function currentToken(): string | null {
-  return state && tokenValid(SCOPE_SHEETS) ? state.token : null;
+  return tokenValid(SCOPE_SHEETS) ? getCached()!.token : null;
 }
 
 export function forgetToken() {
@@ -160,4 +222,8 @@ export function forgetToken() {
     }
   }
   state = null;
+  // Clear the persisted copy too — getCached() only loads from sessionStorage
+  // lazily on first use, so a stale entry could otherwise sit there and get
+  // revived on the next call even though we just explicitly forgot it.
+  forgetPersistedToken();
 }

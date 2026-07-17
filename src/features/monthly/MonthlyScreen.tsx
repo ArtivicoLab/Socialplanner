@@ -6,7 +6,7 @@
 // goals live in the side rail. The plan is a weeks-as-rows grid with mini
 // post cards; on phones it scrolls sideways (same pattern as the Calendar
 // screen) so cells stay full-size instead of squishing.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EmptyState } from "../../components/EmptyState";
 import { ProgressRing } from "../../components/ProgressRing";
 import { PostPhoto } from "../../components/PostPhoto";
@@ -16,7 +16,7 @@ import { IconCalendar, IconChevron, IconTrash } from "../../components/icons";
 import { usePosts, useMonthlyGoals } from "../../stores/v2";
 import { useLocalImages } from "../../stores/localImages";
 import { useSettings } from "../../stores/useSettings";
-import { navigate } from "../../router";
+import { openPostEditor } from "../../stores/usePostEditor";
 import { countByPlatform, postsByDay } from "../../lib/postStats";
 import { categoryColor, POST_FORMAT_LABEL, POST_STATUS_COLOR, POST_STATUS_LABEL, swatchTextColor } from "../../lib/ui";
 import type { Post } from "../../lib/types";
@@ -142,12 +142,24 @@ export function MonthlyScreen() {
     });
   }, [anchor]);
 
-  const openPost = (id: string) => navigate("scheduler", { post: id });
-  const planMonth = () =>
-    navigate("scheduler", {
-      new: "1",
-      date: anchor === thisMonth ? today : monthStart,
-    });
+  const openPost = (post: Post) => openPostEditor(post);
+  const planMonth = () => openPostEditor(null, anchor === thisMonth ? today : monthStart);
+
+  // Same gap as the Calendar screen's grid (see its own comment): the plan
+  // grid scrolls sideways on a phone, so without this "today" can load
+  // off-screen — confirmed live 2026-07-17. Runs once on mount, before
+  // paint, and only bites when today is actually on the currently-viewed
+  // month's grid (a no-op on any other month, so paging away never fights
+  // the user by snapping back).
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const todayCell = gridScrollRef.current?.querySelector<HTMLElement>(".mon-cell--today");
+    const container = gridScrollRef.current;
+    if (!todayCell || !container) return;
+    container.scrollLeft =
+      todayCell.offsetLeft - container.clientWidth / 2 + todayCell.offsetWidth / 2;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -260,7 +272,7 @@ export function MonthlyScreen() {
             /* Weeks as rows; the grid keeps full-size cells and scrolls
                sideways on phones, same pattern as the Calendar screen. */
             <div className="card mon-gridcard">
-              <div className="mon-scroll">
+              <div className="mon-scroll" ref={gridScrollRef}>
                 <div className="mon-grid">
                   {weekdayRow.map((w) => (
                     <div key={w} className="mon-dow">
@@ -277,7 +289,7 @@ export function MonthlyScreen() {
                       >
                         <span className="mon-cell__date">{dayNum(date)}</span>
                         {dPosts.slice(0, MAX_CARDS_PER_DAY).map((p) => (
-                          <PostCard key={p.id} post={p} onOpen={() => openPost(p.id)} />
+                          <PostCard key={p.id} post={p} onOpen={() => openPost(p)} />
                         ))}
                         {dPosts.length > MAX_CARDS_PER_DAY && (
                           <span className="mon-more">

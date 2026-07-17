@@ -117,6 +117,18 @@ export function inSameMonth(iso: string, refIso: string): boolean {
   return a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
 }
 
+/** Human-readable version of a full ISO timestamp (createdAt/updatedAt), e.g.
+ *  "Jul 15, 2026, 1:31 PM" — display only. The raw ISO string next to it in
+ *  the Sheet is what sync's last-write-wins merge actually compares (see
+ *  merge.ts): ISO 8601 sorts lexicographically in the same order as
+ *  chronologically, which a human format doesn't, so never derive one FROM
+ *  the other or feed this back into anything that compares timestamps. */
+export function formatTimestamp(iso: string): string {
+  if (!iso) return "";
+  const d = parseISO(iso);
+  return Number.isNaN(d.getTime()) ? "" : format(d, "MMM d, yyyy, h:mm a");
+}
+
 export {
   isSameDay,
   parseISO,

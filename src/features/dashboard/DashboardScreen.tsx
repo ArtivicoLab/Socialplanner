@@ -30,6 +30,7 @@ import {
 import { todayISO, dueLabel, format, fromISO, addDaysISO } from "../../lib/dates";
 import { navigate, type Route } from "../../router";
 import type { Post } from "../../lib/types";
+import { openPostEditor } from "../../stores/usePostEditor";
 import { DashboardHero } from "./DashboardHero";
 import "../../styles/features/dashboard.css";
 
@@ -183,7 +184,7 @@ export function DashboardScreen() {
                   <button
                     key={p.id}
                     className="dash-postrow"
-                    onClick={() => navigate("scheduler", { post: p.id })}
+                    onClick={() => openPostEditor(p)}
                   >
                     <span
                       className="dash-postrow__thumb"
@@ -268,7 +269,7 @@ export function DashboardScreen() {
                     className="dash-peek__tile"
                     style={{ background: p.cover || categoryColor(p.pillar) }}
                     aria-label={p.idea || "Post"}
-                    onClick={() => navigate("scheduler", { post: p.id })}
+                    onClick={() => openPostEditor(p)}
                   >
                     <PostPhoto postId={p.id} fallbackUrl={p.image} alt="" />
                     {p.status !== "published" && <span className="dash-peek__dot" aria-hidden />}

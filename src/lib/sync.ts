@@ -39,7 +39,7 @@ import {
   writeTab,
 } from "./google/sheets";
 export { ReauthRequiredError, SheetPermissionDeniedError };
-import { forgetToken, requestToken, SCOPE_SHEETS } from "./google/auth";
+import { forgetToken, requestToken, SCOPE_SHEETS, tokenTimeLeftMs } from "./google/auth";
 import { isValidAccessCode } from "./access";
 import { isDemo } from "./demo";
 import { DirtyTabs } from "./syncDirty";
@@ -597,22 +597,142 @@ export function getPreviousSpreadsheetId(): string {
   return localStorage.getItem(LS_PREVIOUS_ID) ?? "";
 }
 
-// ---- debounced flush on every mutation ----
+// ---- debounced flush on every mutation, with background retry on failure ----
+// Local writes (IndexedDB) always succeed instantly — a mutation is never
+// lost. Everything below only governs how soon (and how reliably) it also
+// reaches the Sheet. Added 2026-07-15 — before this, a single failed
+// background push (an expired token, a network blip) just went silent:
+// nothing retried it, and a reload wiped even the memory that anything was
+// still unsynced (see syncDirty.ts's persisted DirtyTabs). Ported from
+// TrackerA, where this exact chain was built and hardened over many
+// iterations — see that app's CLAUDE.md for the individual bugs each part
+// below was written to fix.
 let timer: ReturnType<typeof setTimeout> | null = null;
-export function scheduleFlush(onState: (s: "syncing" | "synced" | "offline") => void) {
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let pushInFlight = false;
+const RETRY_BASE_MS = 5_000;
+const RETRY_MAX_MS = 120_000;
+let retryDelay = RETRY_BASE_MS;
+
+function clearRetry() {
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+  retryDelay = RETRY_BASE_MS;
+}
+
+/** Whether a prior session left work that never reached the Sheet — e.g. a
+    reload landed inside the 2s debounce window before it could push, or a
+    background push failed silently (an expired token) with nothing left to
+    retry it. Used on boot to resume the flush instead of trusting a blind
+    "Synced". */
+export function hasPendingPush(): boolean {
+  return isConnected() && dirty.size > 0;
+}
+
+// Exported so useSync.ts can resume a push left pending from a prior session
+// (see hasPendingPush() above) on boot, reusing the same pushInFlight guard,
+// retry-with-backoff, and reauth handling as every other caller instead of a
+// separate ad hoc boot-time push.
+export function attemptPush(
+  onState: (s: "syncing" | "synced" | "offline") => void,
+  onReauthRequired: () => void
+): void {
+  if (pushInFlight) {
+    // A push is already running — don't start a second one racing it, but
+    // don't just drop this either: a tab dirtied WHILE the in-flight push is
+    // running isn't in its snapshot, so check back shortly after it should
+    // be done rather than silently waiting for the next unrelated edit.
+    retryTimer = setTimeout(() => attemptPush(onState, onReauthRequired), 3000);
+    return;
+  }
+  if (!navigator.onLine) {
+    onState("offline");
+    retryTimer = setTimeout(() => attemptPush(onState, onReauthRequired), retryDelay);
+    return;
+  }
+  onState("syncing");
+  pushInFlight = true;
+  // false: this is an unattended background flush, not a click — a failed
+  // silent refresh must throw ReauthRequiredError fast, never try to pop a
+  // Google sign-in with no user gesture behind it.
+  pushAll(false)
+    .then(() => {
+      clearRetry();
+      onState("synced");
+    })
+    .catch((err) => {
+      onState("offline");
+      if (err instanceof ReauthRequiredError) {
+        // The token expired and a silent refresh failed (e.g. the tab sat
+        // open for a long while) — surface it so the UI can offer a real
+        // "tap to reconnect" button. Never opened a popup for this
+        // ourselves; see ReauthRequiredError.
+        //
+        // Deliberately NOT rescheduling a retry here: a silent refresh that
+        // just failed will keep failing identically every time until the
+        // user actually does something, so retrying just nags on a timer
+        // for no benefit. keepTokenWarm() below has this exact "don't
+        // re-hammer a known failure" guard too (its own alreadyNeedsReauth
+        // check) — this keeps the push retry loop consistent with that same
+        // rule. The next real attempt now only comes from the user's own
+        // action: a new edit (scheduleFlush already calls clearRetry() and
+        // starts fresh) or tapping "reconnect" (tapToRetry() → syncNow(),
+        // a separate call path).
+        onReauthRequired();
+        return;
+      }
+      // Any other failure (offline, rate limit, a blip) is genuinely
+      // transient and likely to self-resolve — keep retrying with backoff.
+      retryTimer = setTimeout(() => attemptPush(onState, onReauthRequired), retryDelay);
+      retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
+    })
+    .finally(() => {
+      pushInFlight = false;
+    });
+}
+
+export function scheduleFlush(
+  onState: (s: "syncing" | "synced" | "offline") => void,
+  onReauthRequired: () => void
+): void {
   if (!isConnected()) return;
   if (!navigator.onLine) {
     onState("offline");
     return;
   }
   if (timer) clearTimeout(timer);
+  clearRetry(); // a fresh edit supersedes any pending backoff retry
   onState("syncing");
-  timer = setTimeout(() => {
-    // false: this is an unattended background flush, not a click — a failed
-    // silent refresh must throw ReauthRequiredError fast, never try to pop a
-    // Google sign-in with no user gesture behind it.
-    pushAll(false)
-      .then(() => onState("synced"))
-      .catch(() => onState("offline"));
-  }, 2000);
+  timer = setTimeout(() => attemptPush(onState, onReauthRequired), 2000);
+}
+
+// Proactively top up the Sheets token between edits instead of only ever
+// checking reactively at the exact moment a save needs one — the reactive
+// pattern is what makes a reconnect prompt feel like it ambushes active
+// work, especially with rapid edits: the 2s debounce keeps getting pushed
+// back by each new edit, so nothing gets checked until the user finally
+// pauses, at which point a whole backlog fires at once. Silent-only — this
+// never opens a popup itself; see useSync.ts for the interval +
+// visibilitychange callers that invoke this.
+const TOKEN_REFRESH_MARGIN_MS = 10 * 60_000; // top up once under 10 min of life left
+export async function keepTokenWarm(
+  alreadyNeedsReauth: boolean,
+  onReauthRequired: () => void
+): Promise<void> {
+  if (isDemo() || !isConnected() || !navigator.onLine) return;
+  // Already known broken and waiting on the user to click "tap to reconnect"
+  // — retrying the same silent request every few minutes just re-confirms
+  // the same failure with nothing new to learn from it. The reactive
+  // retry-with-backoff in attemptPush already covers this state; this
+  // proactive check's whole job is catching a token that's ABOUT to expire,
+  // not repeatedly re-poking one that already failed.
+  if (alreadyNeedsReauth) return;
+  if (tokenTimeLeftMs() > TOKEN_REFRESH_MARGIN_MS) return; // still plenty of runway
+  try {
+    await requestToken(SCOPE_SHEETS, false); // silent only — never pop a window from a timer
+  } catch {
+    onReauthRequired();
+  }
 }

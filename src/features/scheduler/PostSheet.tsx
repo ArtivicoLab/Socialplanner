@@ -199,22 +199,31 @@ export function PostSheet({ open, post, prefillDate, onClose, onSave, onDelete }
   }
 
   return (
-    <BottomSheet open={open} title={post ? "Edit post" : "New post"} onClose={onClose}>
-      <div className="field">
-        <label className="field__label" htmlFor="ps-idea">Idea</label>
-        <input
-          id="ps-idea"
-          className="input"
-          autoFocus
-          value={idea}
-          onChange={(e) => setIdea(e.target.value)}
-          placeholder="e.g. 3 tools I can't work without"
-        />
+    <BottomSheet
+      open={open}
+      title={post ? "Edit Post" : "New Post"}
+      onClose={onClose}
+      action={{ label: post ? "Save" : "Add", onClick: submit, disabled: !idea.trim() }}
+    >
+      <span className="sheet-section-label">Idea</span>
+      <div className="sheet-group">
+        <div className="sheet-cell sheet-cell--field">
+          <input
+            id="ps-idea"
+            className="input"
+            autoFocus
+            value={idea}
+            onChange={(e) => setIdea(e.target.value)}
+            placeholder="e.g. 3 tools I can't work without"
+            aria-label="Idea"
+          />
+        </div>
       </div>
 
-      <div className="spread">
-        <div className="field field--flex">
-          <label className="field__label" htmlFor="ps-date">Date</label>
+      <span className="sheet-section-label">Schedule</span>
+      <div className="sheet-group">
+        <label className="sheet-cell sheet-cell--row" htmlFor="ps-date">
+          <span className="sheet-cell__label">Date</span>
           <input
             id="ps-date"
             className="input"
@@ -222,9 +231,9 @@ export function PostSheet({ open, post, prefillDate, onClose, onSave, onDelete }
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
-        </div>
-        <div className="field field--flex">
-          <label className="field__label" htmlFor="ps-time">Time</label>
+        </label>
+        <label className="sheet-cell sheet-cell--row" htmlFor="ps-time">
+          <span className="sheet-cell__label">Time</span>
           <input
             id="ps-time"
             className="input"
@@ -232,256 +241,287 @@ export function PostSheet({ open, post, prefillDate, onClose, onSave, onDelete }
             value={time}
             onChange={(e) => setTime(e.target.value)}
           />
+        </label>
+      </div>
+
+      <span className="sheet-section-label">Details</span>
+      <div className="sheet-group">
+        <div className="sheet-cell">
+          <span className="postsheet-minilabel">Pillar</span>
+          <ChipRow>
+            {categories.map((c) => (
+              <Chip
+                key={c}
+                active={pillar === c}
+                dotColor={categoryColor(c)}
+                onClick={() => {
+                  setPillar(pillar === c ? "" : c);
+                  setCustomPillar("");
+                }}
+              >
+                {c}
+              </Chip>
+            ))}
+          </ChipRow>
+          <input
+            className="input postsheet-custom"
+            value={customPillar}
+            onChange={(e) => pickCustomPillar(e.target.value)}
+            placeholder="Or type a custom pillar"
+            aria-label="Custom pillar"
+          />
+        </div>
+        <div className="sheet-cell">
+          <span className="postsheet-minilabel">Format</span>
+          <Segmented options={FORMAT_OPTIONS} value={fmt} onChange={setFmt} />
+        </div>
+        <div className="sheet-cell">
+          <span className="postsheet-minilabel">Goal</span>
+          <ChipRow>
+            {goals.map((g) => (
+              <Chip key={g} active={goal === g} onClick={() => setGoal(goal === g ? "" : g)}>
+                {g}
+              </Chip>
+            ))}
+          </ChipRow>
+        </div>
+        <div className="sheet-cell">
+          <span className="postsheet-minilabel">Status</span>
+          <ChipRow>
+            {POST_STATUSES.map((s) => (
+              <Chip
+                key={s}
+                active={status === s}
+                dotColor={POST_STATUS_COLOR[s]}
+                onClick={() => setStatus(s)}
+              >
+                {POST_STATUS_LABEL[s]}
+              </Chip>
+            ))}
+          </ChipRow>
         </div>
       </div>
 
-      <div className="field">
-        <span className="field__label">Pillar</span>
-        <ChipRow>
-          {categories.map((c) => (
-            <Chip
-              key={c}
-              active={pillar === c}
-              dotColor={categoryColor(c)}
-              onClick={() => {
-                setPillar(pillar === c ? "" : c);
-                setCustomPillar("");
-              }}
-            >
-              {c}
-            </Chip>
-          ))}
-        </ChipRow>
-        <input
-          className="input postsheet-custom"
-          value={customPillar}
-          onChange={(e) => pickCustomPillar(e.target.value)}
-          placeholder="Or type a custom pillar"
-          aria-label="Custom pillar"
-        />
+      <span className="sheet-section-label">Content</span>
+      <div className="sheet-group">
+        <div className="sheet-cell sheet-cell--field">
+          <label className="postsheet-minilabel" htmlFor="ps-hook">Hook</label>
+          <textarea
+            id="ps-hook"
+            className="input postsheet-ta--sm"
+            value={hook}
+            onChange={(e) => setHook(e.target.value)}
+            placeholder="The scroll-stopping first line"
+          />
+        </div>
+        <div className="sheet-cell sheet-cell--field">
+          <label className="postsheet-minilabel" htmlFor="ps-caption">Caption</label>
+          <textarea
+            id="ps-caption"
+            className="input postsheet-ta"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            placeholder="The main body text"
+          />
+        </div>
+        <div className="sheet-cell sheet-cell--field">
+          <label className="postsheet-minilabel" htmlFor="ps-cta">Call to action</label>
+          <textarea
+            id="ps-cta"
+            className="input postsheet-ta--sm"
+            value={cta}
+            onChange={(e) => setCta(e.target.value)}
+            placeholder="e.g. Save this for later"
+          />
+        </div>
       </div>
 
-      <div className="field">
-        <span className="field__label">Format</span>
-        <Segmented options={FORMAT_OPTIONS} value={fmt} onChange={setFmt} />
-      </div>
-
-      <div className="field">
-        <span className="field__label">Goal</span>
-        <ChipRow>
-          {goals.map((g) => (
-            <Chip key={g} active={goal === g} onClick={() => setGoal(goal === g ? "" : g)}>
-              {g}
-            </Chip>
-          ))}
-        </ChipRow>
-      </div>
-
-      <div className="field">
-        <span className="field__label">Status</span>
-        <ChipRow>
-          {POST_STATUSES.map((s) => (
-            <Chip
-              key={s}
-              active={status === s}
-              dotColor={POST_STATUS_COLOR[s]}
-              onClick={() => setStatus(s)}
-            >
-              {POST_STATUS_LABEL[s]}
-            </Chip>
-          ))}
-        </ChipRow>
-      </div>
-
-      <div className="field">
-        <label className="field__label" htmlFor="ps-hook">Hook</label>
-        <textarea
-          id="ps-hook"
-          className="input postsheet-ta--sm"
-          value={hook}
-          onChange={(e) => setHook(e.target.value)}
-          placeholder="The scroll-stopping first line"
-        />
-      </div>
-      <div className="field">
-        <label className="field__label" htmlFor="ps-caption">Caption</label>
-        <textarea
-          id="ps-caption"
-          className="input postsheet-ta"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="The main body text"
-        />
-      </div>
-      <div className="field">
-        <label className="field__label" htmlFor="ps-cta">Call to action</label>
-        <textarea
-          id="ps-cta"
-          className="input postsheet-ta--sm"
-          value={cta}
-          onChange={(e) => setCta(e.target.value)}
-          placeholder="e.g. Save this for later"
-        />
-      </div>
-
-      <div className="field">
-        <label className="field__label" htmlFor="ps-group">Hashtag group</label>
-        <select
-          id="ps-group"
-          className="input"
-          value={groupId}
-          onChange={(e) => setGroupId(e.target.value)}
-        >
-          <option value="">None</option>
-          {sortedGroups.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.name || "Untitled group"}
-            </option>
-          ))}
-        </select>
-        {selectedGroup && selectedGroup.tags && (
-          <div className="postsheet-tags">{selectedGroup.tags}</div>
-        )}
-      </div>
-
-      <div className="field">
-        <label className="field__label" htmlFor="ps-tags">Extra hashtags</label>
-        <input
-          id="ps-tags"
-          className="input"
-          value={hashtags}
-          onChange={(e) => setHashtags(e.target.value)}
-          placeholder="#extra #tags"
-        />
-      </div>
-
-      <div className="field">
-        <span className="field__label">Platforms</span>
-        {activePlatforms.length === 0 ? (
-          <div className="muted fs-13">No active platforms yet. Add some in Settings.</div>
-        ) : (
-          <div className="postsheet-platforms">
-            {activePlatforms.map((p) => (
-              <Chip
-                key={p.id}
-                active={postPlatforms.includes(p.name)}
-                onClick={() => togglePlatform(p.name)}
-              >
-                {p.name}
-              </Chip>
+      <span className="sheet-section-label">Hashtags</span>
+      <div className="sheet-group">
+        <label className="sheet-cell sheet-cell--row" htmlFor="ps-group">
+          <span className="sheet-cell__label">Group</span>
+          <select
+            id="ps-group"
+            className="input"
+            value={groupId}
+            onChange={(e) => setGroupId(e.target.value)}
+          >
+            <option value="">None</option>
+            {sortedGroups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name || "Untitled group"}
+              </option>
             ))}
-          </div>
+          </select>
+        </label>
+        {selectedGroup && selectedGroup.tags && (
+          <div className="sheet-cell postsheet-tags">{selectedGroup.tags}</div>
         )}
+        <div className="sheet-cell sheet-cell--field">
+          <label className="postsheet-minilabel" htmlFor="ps-tags">Extra hashtags</label>
+          <input
+            id="ps-tags"
+            className="input"
+            value={hashtags}
+            onChange={(e) => setHashtags(e.target.value)}
+            placeholder="#extra #tags"
+          />
+        </div>
       </div>
 
-      <div className="field">
-        <span className="field__label">Photo</span>
+      <span className="sheet-section-label">Platforms</span>
+      <div className="sheet-group">
+        <div className="sheet-cell">
+          {activePlatforms.length === 0 ? (
+            <div className="muted fs-13">No active platforms yet. Add some in Settings.</div>
+          ) : (
+            <div className="postsheet-platforms">
+              {activePlatforms.map((p) => (
+                <Chip
+                  key={p.id}
+                  active={postPlatforms.includes(p.name)}
+                  onClick={() => togglePlatform(p.name)}
+                >
+                  {p.name}
+                </Chip>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
-        {photoPreview ? (
-          <div className="postsheet-photopreview">
-            <img
-              src={photoPreview}
-              alt="Post photo preview"
-              onError={() => { if (!hasLocalPhoto) setImgBroken(true); }}
-            />
+      <span className="sheet-section-label">Photo</span>
+      {photoPreview ? (
+        <div className="postsheet-photostage">
+          <img
+            className="postsheet-photostage__blur"
+            src={photoPreview}
+            alt=""
+            aria-hidden
+          />
+          <img
+            className="postsheet-photostage__img"
+            src={photoPreview}
+            alt="Post photo preview"
+            onError={() => { if (!hasLocalPhoto) setImgBroken(true); }}
+          />
+          <div className="postsheet-photostage__tools">
             <button
               type="button"
-              className="postsheet-photopreview__remove"
+              className="postsheet-phototool"
+              onClick={openFilePicker}
+              disabled={picking}
+            >
+              <IconCamera size={13} /> {picking ? "Reading…" : "Replace"}
+            </button>
+            <button
+              type="button"
+              className="postsheet-phototool"
               onClick={removePhoto}
             >
               <IconClose size={13} /> Remove
             </button>
           </div>
-        ) : (
-          <button
-            type="button"
-            className="postsheet-photopick"
-            onClick={openFilePicker}
-            disabled={picking}
-          >
-            <IconCamera size={22} />
-            {picking ? "Reading photo…" : "Choose from device"}
-          </button>
-        )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="postsheet-photopick"
+          onClick={openFilePicker}
+          disabled={picking}
+        >
+          <span className="postsheet-photopick__ico">
+            <IconCamera size={20} />
+          </span>
+          <span className="postsheet-photopick__title">
+            {picking ? "Reading photo…" : "Add a photo"}
+          </span>
+          <span className="postsheet-photopick__sub">
+            Any shape works: square, portrait or landscape
+          </span>
+        </button>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={onFileChange}
+      />
+      {photoError && (
+        <div className="postsheet-imgnote" style={{ color: "var(--alert)" }}>
+          {photoError}
+        </div>
+      )}
+      {hasLocalPhoto && (
+        <div className="muted fs-12 mt-1">Saved on this device only, won't sync to other devices.</div>
+      )}
+      <details className="postsheet-urlfallback">
+        <summary>Or paste an image link instead</summary>
         <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={onFileChange}
+          id="ps-image"
+          className="input"
+          type="url"
+          inputMode="url"
+          value={image}
+          onChange={(e) => { setImage(e.target.value); setImgBroken(false); }}
+          placeholder="https://…"
         />
-        {photoError && (
-          <div className="postsheet-imgnote" style={{ color: "var(--alert)" }}>
-            {photoError}
+        {image.trim() !== "" && imgBroken && (
+          <div className="postsheet-imgnote muted fs-13">
+            That link didn't load. The tile will use the cover color instead.
           </div>
         )}
-        {hasLocalPhoto && (
-          <div className="muted fs-12 mt-1">Saved on this device only, won't sync to other devices.</div>
-        )}
+      </details>
 
-        <details className="postsheet-urlfallback">
-          <summary>Or paste an image link instead</summary>
-          <input
-            id="ps-image"
-            className="input"
-            type="url"
-            inputMode="url"
-            value={image}
-            onChange={(e) => { setImage(e.target.value); setImgBroken(false); }}
-            placeholder="https://…"
-          />
-          {image.trim() !== "" && imgBroken && (
-            <div className="postsheet-imgnote muted fs-13">
-              That link didn't load. The tile will use the cover color instead.
-            </div>
-          )}
-        </details>
-      </div>
-
-      <div className="field">
-        <span className="field__label">Cover color</span>
-        <div className="muted fs-13" style={{ marginBottom: 6 }}>
-          Shown on the feed tile when there's no photo.
-        </div>
-        <div className="postsheet-swatches">
-          <button
-            className={`postsheet-swatch postsheet-swatch--auto${cover === "" ? " postsheet-swatch--on" : ""}`}
-            onClick={() => setCover("")}
-            aria-label="Auto (by pillar)"
-            title="Auto (by pillar)"
-          >
-            A
-          </button>
-          {PICKABLE_CATEGORY_COLORS.map((c) => (
+      <span className="sheet-section-label">Cover color</span>
+      <div className="sheet-group">
+        <div className="sheet-cell">
+          <div className="muted fs-13" style={{ marginBottom: 8 }}>
+            Shown on the feed tile when there's no photo.
+          </div>
+          <div className="postsheet-swatches">
             <button
-              key={c}
-              className={`postsheet-swatch${cover === c ? " postsheet-swatch--on" : ""}`}
-              style={{ background: c }}
-              onClick={() => setCover(c)}
-              aria-label={`Cover color ${c}`}
-            />
-          ))}
+              className={`postsheet-swatch postsheet-swatch--auto${cover === "" ? " postsheet-swatch--on" : ""}`}
+              onClick={() => setCover("")}
+              aria-label="Auto (by pillar)"
+              title="Auto (by pillar)"
+            >
+              A
+            </button>
+            {PICKABLE_CATEGORY_COLORS.map((c) => (
+              <button
+                key={c}
+                className={`postsheet-swatch${cover === c ? " postsheet-swatch--on" : ""}`}
+                style={{ background: c }}
+                onClick={() => setCover(c)}
+                aria-label={`Cover color ${c}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="field">
-        <label className="field__label" htmlFor="ps-notes">Notes</label>
-        <textarea
-          id="ps-notes"
-          className="input postsheet-ta--sm"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Anything future-you should know"
-        />
+      <span className="sheet-section-label">Notes</span>
+      <div className="sheet-group">
+        <div className="sheet-cell sheet-cell--field">
+          <textarea
+            id="ps-notes"
+            className="input postsheet-ta--sm"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Anything future-you should know"
+            aria-label="Notes"
+          />
+        </div>
       </div>
 
-      <button className="btn btn--primary" onClick={submit} disabled={!idea.trim()}>
-        {post ? "Save" : "Add post"}
-      </button>
       {onDelete && (
-        <button className="btn btn--danger mt-10" onClick={confirmDelete}>
-          <IconClose size={16} /> Delete
-        </button>
+        <div className="sheet-group" style={{ marginTop: "var(--sp-5)" }}>
+          <button className="sheet-cell--destructive" onClick={confirmDelete}>
+            Delete Post
+          </button>
+        </div>
       )}
     </BottomSheet>
   );

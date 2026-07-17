@@ -8,7 +8,7 @@ import { seedChangelogSeenIfFirstRun } from "../lib/changelog";
 import { loadTombstones } from "../lib/tombstones";
 import { ensureConnectedTabsUpToDate } from "../lib/sync";
 import { useSettings } from "./useSettings";
-import { useSync } from "./useSync";
+import { useSync, resumePendingPush } from "./useSync";
 import { useHashtagGroups, useHighlights, useIdeas, useMonthlyGoals, useMoodBoardPins, usePerformance, usePlatforms, usePosts } from "./v2";
 import { useLocalImages } from "./localImages";
 import { DEFAULT_PLATFORMS, type HashtagGroup, type Highlight, type Idea, type MonthlyGoal, type MoodBoardPin, type PerfEntry, type Platform, type Post } from "../lib/types";
@@ -105,6 +105,12 @@ async function runBootstrap() {
   // first render, never surfaces an error UI — see its own comment in
   // sync.ts for why silently retrying next boot is safe here.
   void ensureConnectedTabsUpToDate();
+
+  // MUST be the last line — resumes a push a prior session left pending
+  // (see useSync.ts's resumePendingPush() doc comment for why calling this
+  // any earlier, before the stores above have actually hydrated, silently
+  // overwrites the real Sheet with an empty snapshot).
+  resumePendingPush();
 }
 
 /**

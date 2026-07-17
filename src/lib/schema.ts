@@ -4,6 +4,7 @@
 // object <-> a flat string[] row so the Sheets sync layer stays trivial.
 
 import type { HashtagGroup, Highlight, Idea, MonthlyGoal, MoodBoardPin, PerfEntry, Platform, Post, Tombstone } from "./types";
+import { formatTimestamp } from "./dates";
 
 export const SPREADSHEET_TITLE = "Social Planner";
 export const SCHEMA_VERSION = 1;
@@ -38,28 +39,37 @@ export const TAB = {
 // key/value tab carrying the buyer's Etsy access code across devices.
 export const V2_TABS = [TAB.Meta] as const;
 
+// "Last updated" is a trailing, write-only display column on every
+// user-browsed tab — a human-readable mirror of `updatedAt` (see
+// dates.ts's formatTimestamp) for someone glancing at the raw Sheet.
+// Appended at the END so it never shifts any existing column index the
+// rowToXxx() parsers below read by position, and rowToXxx never reads it
+// back — sync's last-write-wins merge (merge.ts) must keep comparing the
+// real ISO `updatedAt` column, never this one.
+const LAST_UPDATED_HEADER = "Last updated";
+
 export const HEADERS: Record<string, string[]> = {
   [TAB.Meta]: ["key", "value"],
   [TAB.Posts]: [
     "id", "date", "time", "pillar", "format", "goal", "idea", "status",
     "hook", "caption", "cta", "hashtagGroupId", "hashtags", "platforms",
-    "image", "cover", "notes", "createdAt", "updatedAt",
+    "image", "cover", "notes", "createdAt", "updatedAt", LAST_UPDATED_HEADER,
   ],
-  [TAB.HashtagGroups]: ["id", "name", "tags", "order", "createdAt", "updatedAt"],
+  [TAB.HashtagGroups]: ["id", "name", "tags", "order", "createdAt", "updatedAt", LAST_UPDATED_HEADER],
   [TAB.Ideas]: [
-    "id", "title", "notes", "pillar", "format", "used", "createdAt", "updatedAt",
+    "id", "title", "notes", "pillar", "format", "used", "createdAt", "updatedAt", LAST_UPDATED_HEADER,
   ],
   [TAB.Platforms]: [
     "id", "name", "active", "order", "followersGoal", "engagementGoal",
-    "reachGoal", "createdAt", "updatedAt",
+    "reachGoal", "createdAt", "updatedAt", LAST_UPDATED_HEADER,
   ],
   [TAB.Performance]: [
     "id", "platform", "month", "followers", "engagement", "reach",
-    "createdAt", "updatedAt",
+    "createdAt", "updatedAt", LAST_UPDATED_HEADER,
   ],
-  [TAB.Highlights]: ["id", "date", "label", "createdAt", "updatedAt"],
-  [TAB.MoodBoard]: ["id", "month", "image", "note", "order", "createdAt", "updatedAt"],
-  [TAB.MonthlyGoals]: ["id", "month", "text", "done", "order", "createdAt", "updatedAt"],
+  [TAB.Highlights]: ["id", "date", "label", "createdAt", "updatedAt", LAST_UPDATED_HEADER],
+  [TAB.MoodBoard]: ["id", "month", "image", "note", "order", "createdAt", "updatedAt", LAST_UPDATED_HEADER],
+  [TAB.MonthlyGoals]: ["id", "month", "text", "done", "order", "createdAt", "updatedAt", LAST_UPDATED_HEADER],
   [TAB.Tombstones]: ["id", "collection", "deletedAt"],
 };
 
@@ -87,6 +97,7 @@ export function postToRow(p: Post): string[] {
     p.id, p.date, p.time, p.pillar, p.format, p.goal, p.idea, p.status,
     p.hook, p.caption, p.cta, s(p.hashtagGroupId), s(p.hashtags),
     packPlatforms(p.platforms), s(p.image), s(p.cover), s(p.notes), p.createdAt, p.updatedAt,
+    formatTimestamp(p.updatedAt),
   ];
 }
 export function rowToPost(r: string[]): Post {
@@ -104,7 +115,7 @@ export function rowToPost(r: string[]): Post {
 
 // ---- Hashtag groups ----
 export function hashtagGroupToRow(g: HashtagGroup): string[] {
-  return [g.id, g.name, g.tags, num(g.order), g.createdAt, g.updatedAt];
+  return [g.id, g.name, g.tags, num(g.order), g.createdAt, g.updatedAt, formatTimestamp(g.updatedAt)];
 }
 export function rowToHashtagGroup(r: string[]): HashtagGroup {
   return {
@@ -115,7 +126,10 @@ export function rowToHashtagGroup(r: string[]): HashtagGroup {
 
 // ---- Ideas ----
 export function ideaToRow(i: Idea): string[] {
-  return [i.id, i.title, s(i.notes), s(i.pillar), i.format, b(i.used), i.createdAt, i.updatedAt];
+  return [
+    i.id, i.title, s(i.notes), s(i.pillar), i.format, b(i.used), i.createdAt, i.updatedAt,
+    formatTimestamp(i.updatedAt),
+  ];
 }
 export function rowToIdea(r: string[]): Idea {
   return {
@@ -130,6 +144,7 @@ export function platformToRow(p: Platform): string[] {
   return [
     p.id, p.name, b(p.active), num(p.order), num(p.followersGoal),
     num(p.engagementGoal), num(p.reachGoal), p.createdAt, p.updatedAt,
+    formatTimestamp(p.updatedAt),
   ];
 }
 export function rowToPlatform(r: string[]): Platform {
@@ -145,6 +160,7 @@ export function perfToRow(e: PerfEntry): string[] {
   return [
     e.id, e.platform, e.month, num(e.followers), num(e.engagement),
     num(e.reach), e.createdAt, e.updatedAt,
+    formatTimestamp(e.updatedAt),
   ];
 }
 export function rowToPerf(r: string[]): PerfEntry {
@@ -156,7 +172,7 @@ export function rowToPerf(r: string[]): PerfEntry {
 
 // ---- Highlights ----
 export function highlightToRow(h: Highlight): string[] {
-  return [h.id, h.date, h.label, h.createdAt, h.updatedAt];
+  return [h.id, h.date, h.label, h.createdAt, h.updatedAt, formatTimestamp(h.updatedAt)];
 }
 export function rowToHighlight(r: string[]): Highlight {
   return { id: s(r[0]), date: s(r[1]), label: s(r[2]), createdAt: s(r[3]), updatedAt: s(r[4]) };
@@ -164,7 +180,10 @@ export function rowToHighlight(r: string[]): Highlight {
 
 // ---- Mood board pins ----
 export function moodBoardPinToRow(m: MoodBoardPin): string[] {
-  return [m.id, m.month, s(m.image), s(m.note), num(m.order), m.createdAt, m.updatedAt];
+  return [
+    m.id, m.month, s(m.image), s(m.note), num(m.order), m.createdAt, m.updatedAt,
+    formatTimestamp(m.updatedAt),
+  ];
 }
 export function rowToMoodBoardPin(r: string[]): MoodBoardPin {
   return {
@@ -175,7 +194,10 @@ export function rowToMoodBoardPin(r: string[]): MoodBoardPin {
 
 // ---- Monthly goals ----
 export function monthlyGoalToRow(g: MonthlyGoal): string[] {
-  return [g.id, g.month, s(g.text), b(g.done), num(g.order), g.createdAt, g.updatedAt];
+  return [
+    g.id, g.month, s(g.text), b(g.done), num(g.order), g.createdAt, g.updatedAt,
+    formatTimestamp(g.updatedAt),
+  ];
 }
 export function rowToMonthlyGoal(r: string[]): MonthlyGoal {
   return {

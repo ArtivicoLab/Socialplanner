@@ -424,45 +424,66 @@ tests/              schema / merge / tombstones (+ any new pure-logic tests)
   nothing but noise (and on a phone-width header, the longer text visibly wrapped/broke). Do
   NOT just swap in different demo-aware text — TrackerA tried that first and it still read
   as redundant clutter on a narrow screen; hiding the pill outright is the actual fix.
-- **MISSING ENTIRE SUBSYSTEM, confirmed 2026-07-14: TrackerC has no reauth/retry
-  infrastructure at all, not just an isolated bug.** Unlike the fixes above (each a
-  self-contained patch to something that already exists), TrackerC is missing the whole
-  concept TrackerA built up over many iterations to handle a lapsed Google token gracefully:
-  - No `ReauthRequiredError` type anywhere, and no `needsReauth` state in `useSync.ts` — a
-    failed silent token refresh just falls through to `authedFetch`'s interactive-popup
-    fallback (the bug documented above) instead of failing fast with a typed error.
-  - No retry-with-backoff on push failure at all — `scheduleFlush()` is a single `setTimeout`
-    → one `pushAll()` attempt → `.catch(() => onState("offline"))`, nothing retries a
-    transient failure (rate limit, a blip) and nothing needs to special-case a reauth
-    failure since the concept doesn't exist to retry in the first place.
-  - No token-warming / proactive health check whatsoever — zero matches for
-    `keepTokenWarm`/`TOKEN_REFRESH_MARGIN`/`tokenTimeLeftMs`, no `setInterval` or
-    `visibilitychange` listener in `auth.ts`. This is a bigger gap than TrackerA ever had
-    (TrackerA was missing only the boot-time immediate check; TrackerC has none of it).
-  - The sync pill is a plain, non-interactive `<span>` in both `Header.tsx` and
-    `Sidebar.tsx` — no click handler, nothing for a user to tap even if `needsReauth` did
-    exist.
-  - No persistent "you need to reconnect" indicator of any kind — `DemoBanner.tsx` already
-    establishes the exact right pattern (a slim, always-visible bar with its own action
-    button, gated on a store flag, mounted globally in `App.tsx`) to clone for this.
-  Porting this properly means building the whole chain, not four independent patches: (1)
-  add `ReauthRequiredError` + `allowInteractive` threading (ties into the bug already
-  documented above), (2) add `needsReauth` to `useSync.ts` + retry-with-backoff in the push
-  flow that returns immediately (no reschedule) on `ReauthRequiredError` specifically, (3)
-  add a click handler to the sync pill requesting ONLY `SCOPE_SHEETS` interactively-first
-  (TrackerC already has separate `SCOPE_SHEETS`/`SCOPE_CALENDAR` constants in `auth.ts`, so
-  scope-narrowing is straightforward — never request the combined scope outside genuine
-  first-connect, it triggers Google's heavier "unverified app" consent screen every time),
-  (4) add token-warming (interval + visibilitychange + one immediate call at boot), (5)
-  clone `ReconnectBanner.tsx` from `DemoBanner.tsx`'s shape. See TrackerA's `src/lib/sync.ts`,
-  `src/lib/google/auth.ts`, `src/stores/useSync.ts`, and `src/components/ReconnectBanner.tsx`
-  for the full reference implementation — this is genuinely the biggest remaining piece of
-  sync work across all three apps, not a quick port.
+- **FIXED 2026-07-17 (was: MISSING ENTIRE SUBSYSTEM, confirmed 2026-07-14) — TrackerC had no
+  reauth/retry infrastructure at all, not an isolated bug.** Reported directly: "when away
+  and the app is not syncing... refresh it goes back green but that's not true... user will
+  not know to click sync [in Settings, the only place it worked] instead of the one on the
+  left panel [Sidebar's pill, which did nothing]... in the setting the badge reads connected
+  while it's not true... a lot of miscommunication." Every one of those symptoms traced back
+  to a real gap, all now ported from TrackerA:
+  - `needsReauth` state in `useSync.ts`, set whenever a background push or the proactive
+    warm-up (below) hits a typed `ReauthRequiredError` — a failed silent token refresh no
+    longer just reads as generic "offline" with no explanation.
+  - `syncDirty.ts`'s `DirtyTabs` now persists to `localStorage` (`sp.dirtyTabs`) on every
+    mark/clear instead of living only in a module-level `Set` — this was the direct cause of
+    "refresh it goes back green": a reload wiped the ONLY record that anything was still
+    unsynced, so boot status fell back to a blind `navigator.onLine` guess. `hasPendingPush()`
+    + `resumePendingPush()` (called at the very end of `bootstrap.ts`, after stores hydrate —
+    any earlier and it reads the stores' still-empty defaults, see that function's own doc
+    comment) now check the persisted state honestly and actually resume the push on boot.
+  - `attemptPush()` in `sync.ts`: a `pushInFlight` guard + retry-with-backoff
+    (`RETRY_BASE_MS`=5s, doubling, capped at `RETRY_MAX_MS`=120s) for genuinely transient
+    failures (a blip, a rate limit) — but returns immediately with NO reschedule on
+    `ReauthRequiredError` specifically, since a dead silent refresh keeps failing identically
+    no matter how many times you retry it; only a new edit or the user tapping reconnect
+    starts a fresh attempt.
+  - `keepTokenWarm()` (`sync.ts`) + `tokenTimeLeftMs()`/`sessionStorage` token persistence
+    (`auth.ts`) — proactively tops up the token between edits (5-min interval +
+    `visibilitychange` + one immediate check on boot) instead of only ever discovering a
+    lapsed token reactively, at the worst possible moment (mid-edit). The `sessionStorage`
+    mirror also means a reload no longer discards a token that still had real minutes left,
+    which was quietly manufacturing MORE reauth prompts than the real ~1hr Google expiry
+    ever would have on its own.
+  - The sync pill in BOTH `Header.tsx` and `Sidebar.tsx` was a plain, non-interactive `<span>`
+    — now a real `<button>` with a `tapToRetry()` click handler whenever there's something to
+    fix (`needsReauth`, or a plain retryable "offline"), matching TrackerA exactly. Both were
+    ALSO still missing the separate, already-known "hide the pill during demo mode" fix (see
+    the sync-pill-contradicts-demo bullet elsewhere in this file) — fixed in the same pass
+    since it's the same component.
+  - `<ReconnectBanner/>` (new, cloned from `DemoBanner.tsx`'s shape, mounted in `App.tsx`) —
+    a persistent, always-visible bar, not a toast that only helps if you're looking at the
+    exact moment it fires. Stays up until reconnected.
+  - Settings' "Connected" badge only ever checked whether a spreadsheet was *remembered*
+    (`connected`), never whether sync was *currently healthy* — unconditionally green even
+    mid-`needsReauth`, exactly the reported "badge reads connected while it's not true." Now
+    shows an amber "Reconnect needed" state with an explanation and a `tapToRetry()`-wired
+    button instead of "Sync now" whenever `needsReauth` is true.
+  - Also fixed while in `Header.tsx`: the avatar button read "UB" (Ultimate Budget —
+    TrackerB's initials, a copy-paste leftover) instead of "SP".
+  **Found the identical "Connected" badge gap in TrackerA itself while building the
+  reference for this fix — TrackerA's own `SettingsScreen.tsx` has the exact same
+  unconditionally-green badge, ignoring its own `needsReauth`. Not fixed there; flagged in
+  TrackerA's own TODO instead, since fixing it wasn't part of what was asked this time.**
+  Deliberately did NOT port the request-`SCOPE_SHEETS`-only nuance or a Map-based multi-scope
+  token cache — TrackerC only ever requests `SCOPE_SHEETS` (no Calendar feature exists here),
+  so the single-slot `state` in `auth.ts` plus its own `sessionStorage` mirror is sufficient;
+  see the "STILL OPEN" shared-token-slot bullet above for when that would actually start
+  mattering.
 - **MORE CONFIRMED-LIVE BUGS, from TrackerA's 2026-07-14 full-app QA pass — verified present
-  in this repo's current code. TrackerC's `sync.ts` is architecturally simpler/older than
-  TrackerA's (no per-tab `dirtyTabs`/`pushInFlight` system found here — consistent with the
-  "MISSING ENTIRE SUBSYSTEM" note above), so a couple of these need adapting to this repo's
-  shape rather than a verbatim line-for-line port; noted per bullet.**
+  in this repo's current code. TrackerC's `sync.ts` NOW has its own `dirtyTabs`/`pushInFlight`
+  system (see the reauth/retry fix above, 2026-07-17) — the note below about needing to adapt
+  rather than verbatim-port predates that and is now less true for THIS specific list than it
+  was, though `tabValues()` itself (immediately below) is still unfixed; noted per bullet.**
   - `tabValues()` (`sync.ts:92`) builds what gets pushed from THIS tab/window's in-memory
     Zustand state, not from IndexedDB — confirmed same pattern as TrackerA's pre-fix code. Two
     tabs/windows open on one device (installed PWA icon + a leftover browser tab is normal for

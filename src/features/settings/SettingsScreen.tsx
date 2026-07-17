@@ -35,8 +35,8 @@ export function SettingsScreen() {
     tabBarRoutes, activated, accessCode, update,
   } = useSettings();
   const {
-    connected, spreadsheetId, previousSpreadsheetId, hasClientId, busy, error, wrongAccount,
-    connect, relink, disconnect, syncNow, useThisAccountInstead, startNewSheet,
+    connected, spreadsheetId, previousSpreadsheetId, hasClientId, busy, error, wrongAccount, needsReauth,
+    connect, relink, disconnect, syncNow, useThisAccountInstead, startNewSheet, tapToRetry,
   } = useSync();
   const platforms = usePlatforms((s) => s.items);
   const addPlatform = usePlatforms((s) => s.add);
@@ -277,11 +277,13 @@ export function SettingsScreen() {
             <div className="spread settings-connected-row">
               <div>
                 <div className="settings-connected-label">
-                  <span className="dot-8 dot-8--success" />
-                  Connected
+                  <span className={`dot-8 ${needsReauth ? "dot-8--warn" : "dot-8--success"}`} />
+                  {needsReauth ? "Reconnect needed" : "Connected"}
                 </div>
                 <div className="muted fs-13">
-                  Your data lives in your own Google Drive.
+                  {needsReauth
+                    ? "Your Google connection lapsed after being idle a while. New changes are still saved on this device, but won't reach your Sheet until you reconnect."
+                    : "Your data lives in your own Google Drive."}
                 </div>
                 {accessCode && (
                   <div className="muted fs-13">Unlocked with code {accessCode}</div>
@@ -296,8 +298,12 @@ export function SettingsScreen() {
             >
               Open my sheet ↗
             </a>
-            <button className="btn btn--primary btn--stack" disabled={busy} onClick={() => syncNow()}>
-              {busy ? "Syncing…" : "Sync now"}
+            <button
+              className="btn btn--primary btn--stack"
+              disabled={busy}
+              onClick={() => (needsReauth ? tapToRetry() : syncNow())}
+            >
+              {busy ? (needsReauth ? "Reconnecting…" : "Syncing…") : needsReauth ? "Reconnect" : "Sync now"}
             </button>
             <button className="btn btn--ghost" onClick={disconnect}>
               Disconnect

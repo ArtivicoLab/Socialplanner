@@ -258,6 +258,35 @@ h3 {
   font-weight: 700;
 }
 
+/* ---------- Reconnect banner (needsReauth) ---------- */
+.reconnectbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: 10px var(--sp-4);
+  background: var(--warn);
+  color: #fff;
+}
+.reconnectbar__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.reconnectbar__btn {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  background: #fff;
+  color: var(--warn);
+  font-size: 13px;
+  font-weight: 700;
+}
+.reconnectbar__btn:disabled {
+  opacity: 0.7;
+}
+
 /* ---------- Update-available toast ---------- */
 .updatebar {
   position: fixed;
@@ -774,13 +803,21 @@ h3 {
   height: 28px;
 }
 
-/* ---------- Bottom sheet ---------- */
+/* ---------- Modal sheet (iOS presentation) ----------
+   Phone: bottom sheet with grabber + frosted nav header, springs up.
+   Desktop (≥700px): centered form-sheet card, scales in.
+   Header: Cancel (left) · centered title · bold action (right) — or a gray
+   circular ✕ when the sheet has no primary action. Only .sheet__body
+   scrolls; the header stays put and grows a hairline once content moves
+   beneath it. */
 .sheet-scrim {
   position: fixed;
   inset: 0;
   background: var(--scrim);
+  backdrop-filter: blur(3px) saturate(0.9);
+  -webkit-backdrop-filter: blur(3px) saturate(0.9);
   z-index: 40;
-  animation: fade 0.2s var(--ease);
+  animation: fade 0.25s var(--ease);
 }
 @keyframes fade {
   from {
@@ -793,16 +830,16 @@ h3 {
   bottom: 0;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   z-index: 41;
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
-  border-radius: 24px 24px 0 0;
-  padding: var(--sp-3) var(--sp-4)
-    calc(var(--sp-6) + var(--safe-bottom));
-  box-shadow: var(--shadow);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -8px 60px rgba(0, 0, 0, 0.22), var(--shadow);
   max-height: 92dvh;
-  overflow-y: auto;
-  animation: sheet-up var(--dur) var(--ease);
+  overflow: hidden; /* the body scrolls, not the sheet */
+  animation: sheet-up 0.42s cubic-bezier(0.32, 0.72, 0, 1); /* iOS spring feel */
 }
 @keyframes sheet-up {
   from {
@@ -812,17 +849,286 @@ h3 {
     transform: translate(-50%, 0);
   }
 }
+
+/* ---- Header: grabber + native-style nav bar ---- */
+.sheet__head {
+  flex: none;
+  padding: 8px var(--sp-4) 10px;
+  background: var(--surface);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+  z-index: 1;
+}
+.sheet__head--scrolled {
+  border-bottom-color: var(--hairline);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: blur(14px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+}
+.sheet__head--bare {
+  padding-bottom: 2px;
+}
 .sheet__grabber {
-  width: 40px;
+  width: 36px;
   height: 5px;
   border-radius: 3px;
-  background: var(--hairline);
-  margin: 0 auto var(--sp-3);
+  background: color-mix(in srgb, var(--muted) 32%, transparent);
+  margin: 0 auto 10px;
+}
+.sheet__nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 34px;
 }
 .sheet__title {
-  font-size: 20px;
+  grid-column: 2;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sheet__cancel {
+  justify-self: start;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--accent);
+  padding: 6px 2px;
+  border-radius: 8px;
+  transition: opacity 0.15s;
+}
+.sheet__cancel:active {
+  opacity: 0.5;
+}
+.sheet__action {
+  justify-self: end;
+  font-size: 16px;
   font-weight: 800;
-  margin-bottom: var(--sp-4);
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  padding: 6px 2px;
+  border-radius: 8px;
+  transition: opacity 0.15s, transform 0.12s var(--ease);
+}
+.sheet__action:active {
+  transform: scale(0.96);
+  opacity: 0.7;
+}
+.sheet__action:disabled {
+  color: var(--muted);
+  opacity: 0.45;
+  cursor: default;
+}
+.sheet__action--danger {
+  color: var(--alert);
+}
+.sheet__navspacer {
+  width: 30px;
+}
+.sheet__x {
+  justify-self: end;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--muted);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease),
+    transform 0.12s var(--ease);
+}
+.sheet__x:hover {
+  color: var(--ink);
+}
+.sheet__x:active {
+  transform: scale(0.9);
+}
+
+/* ---- Scrollable body + designed scrollbar ----
+   Overlay-style rounded thumb floating over a transparent track (the
+   border-box trick inset it from the edge), themed for both modes. */
+.sheet__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-4) var(--sp-4) calc(var(--sp-6) + var(--safe-bottom));
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 42%, transparent) transparent;
+}
+.sheet__body::-webkit-scrollbar {
+  width: 11px;
+  background: transparent;
+}
+.sheet__body::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 6px 0;
+}
+.sheet__body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 38%, transparent);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  min-height: 44px;
+}
+.sheet__body::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--muted) 60%, transparent);
+  background-clip: padding-box;
+}
+
+/* ---- iOS inset-grouped form vocabulary (shared by every sheet) ---- */
+.sheet-section-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: var(--sp-4) 0 6px 14px;
+}
+.sheet-section-label:first-child {
+  margin-top: 0;
+}
+/* Groups are elevation, not fill: same surface as the sheet, drawn by a
+   crisp hairline + whisper of shadow — no gray or tinted field backgrounds. */
+.sheet-group {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(10, 10, 15, 0.045);
+}
+.sheet-group + .sheet-section-label {
+  margin-top: var(--sp-5);
+}
+.sheet-cell {
+  padding: 11px 14px;
+}
+.sheet-cell + .sheet-cell {
+  border-top: 1px solid color-mix(in srgb, var(--hairline) 72%, transparent);
+}
+/* Label-left / control-right native row (Date, Time, pickers…) */
+.sheet-cell--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 46px;
+}
+.sheet-cell__label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: none;
+}
+/* Small caps label above a control INSIDE a cell (Pillar, Format, …) */
+.postsheet-minilabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 7px;
+}
+/* Inputs inside a group lose their own box — the group is the box. */
+.sheet-group .input {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+.sheet-group .input:focus {
+  border: none;
+  outline: none;
+}
+.sheet-cell--row .input,
+.sheet-cell--row select.input {
+  width: auto;
+  max-width: 60%;
+  text-align: right;
+  font-weight: 600;
+  color: var(--accent);
+}
+.sheet-cell--field .input {
+  font-size: 16px;
+}
+/* Focus: a slim accent tick on the row's edge — no colored fill anywhere */
+.sheet-cell:focus-within {
+  box-shadow: inset 2.5px 0 0 var(--accent);
+}
+/* Loose inputs inside sheets (outside any group) match: clean surface + border */
+.sheet .field .input,
+.sheet .postsheet-urlfallback .input {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+}
+.sheet .field .input:focus,
+.sheet .postsheet-urlfallback .input:focus {
+  border-color: var(--accent);
+}
+
+/* ---- Buttons inside sheets: capsule weight + press physics ---- */
+.sheet .btn {
+  border-radius: 16px;
+  padding: 15px 20px;
+}
+.sheet .btn:active:not(:disabled) {
+  transform: scale(0.975);
+}
+.sheet .btn--primary {
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+/* iOS destructive list row: a red centered text row in its own group */
+.sheet-cell--destructive {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--alert);
+  transition: background 0.15s var(--ease);
+}
+.sheet-cell--destructive:active {
+  background: var(--alert-soft);
+}
+
+/* ---- Desktop: centered form-sheet card (iPad style) ---- */
+@media (min-width: 700px) {
+  .sheet {
+    bottom: auto;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(560px, calc(100vw - 48px));
+    max-width: 560px;
+    max-height: 86dvh;
+    border-radius: 22px;
+    animation: sheet-pop 0.3s var(--ease);
+  }
+  @keyframes sheet-pop {
+    from {
+      transform: translate(-50%, -47%) scale(0.96);
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+  }
+  .sheet__grabber {
+    display: none;
+  }
+  .sheet__head {
+    padding-top: var(--sp-4);
+  }
 }
 
 /* ---------- Coach-mark tour (first-run, dashboard only) ---------- */
@@ -1121,6 +1427,9 @@ textarea.input {
 }
 .dot-8--success {
   background: var(--success);
+}
+.dot-8--warn {
+  background: var(--warn);
 }
 .dot-9 {
   width: 9px;

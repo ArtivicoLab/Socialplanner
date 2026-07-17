@@ -4,12 +4,13 @@
 // Highlight dates (Pay Day / Launch Day …) tint their cells and are managed
 // in a card below the grid. The grid scrolls horizontally so the day cells stay
 // big and readable on a phone. Tapping a day opens a popup with that day's
-// posts and full in-place CRUD (add / edit / delete) via the shared PostSheet —
-// no jumping away to the Scheduler.
-import { useMemo, useRef, useState } from "react";
+// posts; viewing/editing/creating a post routes through the shared, globally
+// mounted post editor (stores/usePostEditor.ts) — no jumping away to the
+// Scheduler.
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BottomSheet } from "../../components/BottomSheet";
 import { PostPhoto, useObjectUrl } from "../../components/PostPhoto";
-import { PostSheet } from "../scheduler/PostSheet";
+import { openPostEditor } from "../../stores/usePostEditor";
 import {
   IconCalendar,
   IconCamera,
@@ -44,8 +45,6 @@ const MAX_CELL_POSTS = 4;
 
 export function CalendarScreen() {
   const posts = usePosts((s) => s.items);
-  const addPost = usePosts((s) => s.add);
-  const updatePost = usePosts((s) => s.update);
   const removePost = usePosts((s) => s.remove);
   const highlights = useHighlights((s) => s.items);
   const addHighlight = useHighlights((s) => s.add);
@@ -62,11 +61,6 @@ export function CalendarScreen() {
   const end = addDaysISO(start, WEEKS_SHOWN * 7 - 1);
 
   const [daySel, setDaySel] = useState<string | null>(null);
-
-  // In-place post editor (the same BottomSheet the Scheduler uses).
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editorPost, setEditorPost] = useState<Post | null>(null);
-  const [editorDate, setEditorDate] = useState("");
 
   // highlights manager form
   const [hlDate, setHlDate] = useState(today);
@@ -146,24 +140,13 @@ export function CalendarScreen() {
     setDaySel(date);
   }
 
-  // ---- in-place post CRUD ----
-  function openEditor(post: Post | null, date: string) {
-    setEditorPost(post);
-    setEditorDate(date);
-    setEditorOpen(true);
-  }
-  function saveEditor(patch: Partial<Post>): Post | void {
-    setEditorOpen(false);
-    if (editorPost) { updatePost(editorPost.id, patch); return undefined; }
-    return addPost(patch);
-  }
-  function deleteEditor() {
-    if (editorPost) {
-      removePost(editorPost.id);
-      void useLocalImages.getState().remove(editorPost.id);
-    }
-    setEditorOpen(false);
-  }
+  // In-place post view/edit — the same shared sheet every other screen uses
+  // (see stores/usePostEditor.ts). Calendar used to render its own separate
+  // local <PostSheet> instance here; migrated 2026-07-17 alongside adding
+  // the read-only view step, so Calendar gets that for free too instead of
+  // needing a second, parallel implementation kept in sync by hand.
+  const openEditor = openPostEditor;
+
   async function deletePostRow(p: Post) {
     const ok = await confirmDialog({
       title: `Delete "${p.idea || "this post"}"?`,
@@ -246,6 +229,22 @@ export function CalendarScreen() {
   const dayPosts = daySel ? postsMap.get(daySel) ?? [] : [];
   const dayHls = daySel ? hlMap.get(daySel) ?? [] : [];
 
+  // The grid scrolls sideways on a phone (see .cal-scroll's own comment), so
+  // without this, "today" can start off-screen and the user has to go
+  // hunting for it on every load — confirmed live 2026-07-17. Runs once on
+  // mount, before paint (no visible jump), and only when today is actually
+  // in the default view: a no-op once startSel is manually changed, so
+  // paging away from "this week" never fights the user by snapping back.
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const todayCell = gridScrollRef.current?.querySelector<HTMLElement>(".cal-cell--today");
+    const container = gridScrollRef.current;
+    if (!todayCell || !container) return;
+    container.scrollLeft =
+      todayCell.offsetLeft - container.clientWidth / 2 + todayCell.offsetWidth / 2;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       <div className="screen-head">
@@ -286,7 +285,7 @@ export function CalendarScreen() {
       </div>
 
       <div className="card cal-gridcard" data-tour="cal-grid">
-        <div className="cal-scroll">
+        <div className="cal-scroll" ref={gridScrollRef}>
           <div className="cal-grid">
             {weekdayRow.map((w) => (
               <div key={w} className="cal-dow">
@@ -542,16 +541,6 @@ export function CalendarScreen() {
           </>
         )}
       </BottomSheet>
-
-      {/* The shared post editor, layered above the day popup */}
-      <PostSheet
-        open={editorOpen}
-        post={editorPost}
-        prefillDate={editorDate}
-        onClose={() => setEditorOpen(false)}
-        onSave={saveEditor}
-        onDelete={editorPost ? deleteEditor : undefined}
-      />
 
       {/* Add a mood board pin: device photo (primary) or a pasted image link */}
       <BottomSheet open={moodAddOpen} title="Pin an image" onClose={() => setMoodAddOpen(false)}>

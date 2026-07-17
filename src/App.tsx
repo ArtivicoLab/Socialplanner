@@ -4,6 +4,7 @@ import { Header } from "./components/Header";
 import { TabBar } from "./components/TabBar";
 import { Sidebar } from "./components/Sidebar";
 import { DemoBanner } from "./components/DemoBanner";
+import { ReconnectBanner } from "./components/ReconnectBanner";
 import { UpdatePrompt } from "./components/UpdatePrompt";
 import { DashboardScreen } from "./features/dashboard/DashboardScreen";
 import { SchedulerScreen } from "./features/scheduler/SchedulerScreen";
@@ -23,6 +24,8 @@ import { CoachTour, hasSeenTour } from "./components/CoachTour";
 import type { Route } from "./router";
 import { WhatsNewBanner } from "./components/WhatsNewBanner";
 import { ConfirmHost } from "./components/ConfirmDialog";
+import { PostEditorHost } from "./components/PostEditorHost";
+import { TabNotifier } from "./components/TabNotifier";
 
 export default function App() {
   const route = useRoute();
@@ -85,6 +88,7 @@ export default function App() {
       <div className="app__col">
         <Header onCoachTour={replayTour} />
         <DemoBanner />
+        <ReconnectBanner />
         <WhatsNewBanner />
         <main className={`app__main${route === "dashboard" ? " app__main--wide" : ""}`} key={route}>
           {route === "dashboard" && <DashboardScreen />}
@@ -104,6 +108,8 @@ export default function App() {
       <TabBar active={route} />
       <UpdatePrompt />
       <ConfirmHost />
+      <PostEditorHost />
+      <TabNotifier />
       {showTour && (
         <CoachTour
           startTarget={tourStartTarget}

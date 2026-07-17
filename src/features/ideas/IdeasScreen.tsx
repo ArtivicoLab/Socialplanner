@@ -18,7 +18,7 @@ import { useIdeas, usePosts } from "../../stores/v2";
 import { useSettings } from "../../stores/useSettings";
 import { categoryColor, POST_FORMAT_LABEL } from "../../lib/ui";
 import { POST_FORMATS, type Idea, type PostFormat } from "../../lib/types";
-import { navigate } from "../../router";
+import { openPostEditor } from "../../stores/usePostEditor";
 import "../../styles/features/ideas.css";
 
 type UsedFilter = "all" | "unused" | "used";
@@ -71,7 +71,7 @@ export function IdeasScreen() {
       date: "", // parked in the scheduler until the user picks a day
     });
     update(idea.id, { used: true });
-    navigate("scheduler", { post: post.id });
+    openPostEditor(post);
   };
 
   return (
@@ -278,63 +278,72 @@ function IdeaSheet({
   }, [open, idea]);
 
   return (
-    <BottomSheet open={open} title={idea ? "Edit idea" : "New idea"} onClose={onClose}>
-      <div className="field">
-        <label className="field__label" htmlFor="idea-title">
-          Idea
-        </label>
-        <input
-          id="idea-title"
-          className="input"
-          autoFocus
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Productivity tip nobody talks about"
-        />
-      </div>
-      <div className="field">
-        <label className="field__label" htmlFor="idea-notes">
-          Notes
-        </label>
-        <textarea
-          id="idea-notes"
-          className="input"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Hook angles, references, audio, anything"
-        />
-      </div>
-      <div className="field">
-        <span className="field__label">Pillar</span>
-        <div className="ideas-sheet__pillars">
-          {categories.map((c) => (
-            <Chip
-              key={c}
-              active={pillar === c}
-              dotColor={categoryColor(c)}
-              onClick={() => setPillar(pillar === c ? "" : c)}
-            >
-              {c}
-            </Chip>
-          ))}
+    <BottomSheet
+      open={open}
+      title={idea ? "Edit Idea" : "New Idea"}
+      onClose={onClose}
+      action={{
+        label: idea ? "Save" : "Add",
+        disabled: !title.trim(),
+        onClick: () => onSave({ title: title.trim(), notes: notes.trim(), pillar, format }),
+      }}
+    >
+      <span className="sheet-section-label">Idea</span>
+      <div className="sheet-group">
+        <div className="sheet-cell sheet-cell--field">
+          <input
+            id="idea-title"
+            className="input"
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Productivity tip nobody talks about"
+            aria-label="Idea"
+          />
         </div>
       </div>
-      <div className="field">
-        <span className="field__label">Format</span>
-        <Segmented options={FORMAT_OPTIONS} value={format} onChange={setFormat} />
+      <span className="sheet-section-label">Notes</span>
+      <div className="sheet-group">
+        <div className="sheet-cell sheet-cell--field">
+          <textarea
+            id="idea-notes"
+            className="input"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Hook angles, references, audio, anything"
+            aria-label="Notes"
+          />
+        </div>
       </div>
-      <button
-        className="btn btn--primary"
-        disabled={!title.trim()}
-        onClick={() => onSave({ title: title.trim(), notes: notes.trim(), pillar, format })}
-      >
-        {idea ? "Save" : "Add idea"}
-      </button>
+      <span className="sheet-section-label">Details</span>
+      <div className="sheet-group">
+        <div className="sheet-cell">
+          <span className="postsheet-minilabel">Pillar</span>
+          <div className="ideas-sheet__pillars">
+            {categories.map((c) => (
+              <Chip
+                key={c}
+                active={pillar === c}
+                dotColor={categoryColor(c)}
+                onClick={() => setPillar(pillar === c ? "" : c)}
+              >
+                {c}
+              </Chip>
+            ))}
+          </div>
+        </div>
+        <div className="sheet-cell">
+          <span className="postsheet-minilabel">Format</span>
+          <Segmented options={FORMAT_OPTIONS} value={format} onChange={setFormat} />
+        </div>
+      </div>
       {onDelete && (
-        <button className="btn btn--danger ideas-sheet__delete" onClick={onDelete}>
-          <IconTrash size={16} />
-          Delete
-        </button>
+        <div className="sheet-group" style={{ marginTop: "var(--sp-5)" }}>
+          <button className="sheet-cell--destructive" onClick={onDelete}>
+            <IconTrash size={16} />
+            Delete Idea
+          </button>
+        </div>
       )}
     </BottomSheet>
   );

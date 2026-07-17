@@ -18,7 +18,7 @@ import { feedPosts } from "../../lib/postStats";
 import { addDaysISO, format, fromISO, todayISO } from "../../lib/dates";
 import { categoryColor, POST_FORMAT_LABEL, swatchTextColor } from "../../lib/ui";
 import type { Post, PostFormat } from "../../lib/types";
-import { navigate } from "../../router";
+import { openPostEditor } from "../../stores/usePostEditor";
 import "../../styles/features/feed.css";
 
 function formatIcon(f: PostFormat) {
@@ -43,7 +43,7 @@ function FeedTile({ post, live }: { post: Post; live: boolean }) {
     <button
       className={`feed-tile${live ? "" : " feed-tile--planned"}${hasPhoto ? " feed-tile--photo" : ""}`}
       style={{ background: fill, color: textColor }}
-      onClick={() => navigate("scheduler", { post: post.id })}
+      onClick={() => openPostEditor(post)}
       aria-label={`${post.idea || "Untitled post"}, ${
         POST_FORMAT_LABEL[post.format]
       }, ${live ? "published" : "planned"}`}

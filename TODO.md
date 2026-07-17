@@ -106,22 +106,59 @@
         broken on an installed PWA). SettingsScreen's OWN danger-zone buttons
         were fixed 2026-07-15 while touching that file for the item above;
         `deletePlatform`'s is not, since it wasn't part of that change.
-  - [ ] Dirty-tab tracking (`syncDirty.ts`) is in-memory only — a reload
+  - [x] ~~Dirty-tab tracking (`syncDirty.ts`) is in-memory only — a reload
         before a push completes silently drops the pending push behind a
-        falsely-confident "Synced" status.
-  - [ ] Sync pill shows "Saved"/"Synced" during demo mode, contradicting the
-        demo banner's own "Nothing here is saved" right above it.
-  - [ ] **Biggest one — no reauth/retry UI exists at all** (the underlying
-        `ReauthRequiredError` type now exists as of 2026-07-15's timeout/
-        allowInteractive fix, but nothing surfaces it): no `needsReauth`
-        state, no retry-with-backoff on push failure, no proactive
-        token-warming, no click handler on the sync pill, no persistent
-        "reconnect" banner — a background reauth failure currently just
-        shows generic "offline." TrackerA built this over many iterations;
-        it needs building here, not just porting a patch. See CLAUDE.md's
-        writeup for the 5-part breakdown.
+        falsely-confident "Synced" status.~~ — **fixed 2026-07-17**:
+        `DirtyTabs` now persists to `localStorage` (`sp.dirtyTabs`) on every
+        mark/clear, and `resumePendingPush()` (called at the end of
+        `bootstrap.ts`, after stores hydrate) resumes it on the next boot.
+  - [x] ~~Sync pill shows "Saved"/"Synced" during demo mode, contradicting the
+        demo banner's own "Nothing here is saved" right above it.~~ —
+        **fixed 2026-07-17**: both `Header.tsx` and `Sidebar.tsx` now hide
+        the pill entirely while `demo` is true, matching TrackerA.
+  - [x] ~~**Biggest one — no reauth/retry UI exists at all**~~ — **fixed
+        2026-07-17, ported from TrackerA in full**: `needsReauth` state,
+        `tapToRetry()`, retry-with-backoff + a `pushInFlight` guard on every
+        background push (`attemptPush`/`scheduleFlush` in `sync.ts`),
+        proactive `keepTokenWarm()` (5-min interval + `visibilitychange` +
+        one immediate check on boot), a persistent `<ReconnectBanner/>`
+        (mounted in `App.tsx`, stays up until reconnected, doesn't rely on
+        catching a toast at the right moment), and the sync pill in BOTH
+        `Header.tsx`/`Sidebar.tsx` is now a real clickable button when
+        there's something to fix. Also ported TrackerA's `sessionStorage`
+        token persistence + `tokenTimeLeftMs()` (`auth.ts`) so a reload
+        doesn't discard a still-valid token and trigger reauth for no
+        reason. Root cause of the original report (2026-07-17, user: "when
+        away and the app is not syncing... refresh it goes back green but
+        that's not true... user will not know to click sync... in the
+        setting the badge reads connected while it's not true"): boot
+        status was a blind `navigator.onLine` guess with no memory of
+        pending work, the pills were non-interactive, and Settings'
+        "Connected" badge only ever checked whether a spreadsheet was
+        *remembered*, never whether sync was *currently healthy* — fixed
+        that too, see CLAUDE.md's writeup.
+        **Found the identical "Connected" badge gap in TrackerA while
+        building the reference for this fix — TrackerA's own Settings
+        screen has the exact same bug (unconditionally green, ignores
+        `needsReauth`), not yet fixed there.**
 
 ## Nice to have (competitor parity+)
+- [ ] **Past-due posts get no treatment anywhere** — confirmed live
+      2026-07-17 during a testing pass (Monthly Plan: a post dated
+      yesterday, still not marked Published, looked no different from any
+      other scheduled post). Root cause: `planStats()`'s `scheduledToday`
+      (the Dashboard's "N due today" stat, `postStats.ts:33`) is a strict
+      `p.date === refIso` equality check — a post dated any day BEFORE
+      today just silently stops appearing in that stat once its date
+      passes, and nothing else (Scheduler row, Calendar cell, Monthly Plan
+      card) gives it different styling either. Nothing in the app ever
+      flags "this was supposed to go out and didn't." Needs an actual
+      design decision, not just loosening the equality check to `<=`:
+      CLAUDE.md's own product principles say "gentle language, never shame
+      a missed posting day," so whatever ships here should read as a calm,
+      informational nudge (e.g. a distinct but soft "Past due" label next
+      to the existing status chip, or rolling a count into the Dashboard
+      stat) — not a harsh red-alert treatment.
 - [ ] Drag posts between days on the desktop calendar.
 - [ ] Duplicate-post action (repost the same content later).
 - [ ] Per-platform default posting times.

@@ -336,65 +336,65 @@ function GroupSheet({
   return (
     <BottomSheet
       open={open}
-      title={group ? "Edit group" : "New hashtag group"}
+      title={group ? "Edit Group" : "New Group"}
       onClose={onClose}
+      action={{
+        label: group ? "Save" : "Add",
+        disabled: !name.trim(),
+        onClick: () => onSave({ name: name.trim(), tags: normalizeTags(tags) }),
+      }}
     >
-      <div className="field">
-        <label className="field__label" htmlFor="hash-name">
-          Name
-        </label>
-        <input
-          id="hash-name"
-          className="input"
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Content Creation"
-        />
+      <span className="sheet-section-label">Name</span>
+      <div className="sheet-group">
+        <div className="sheet-cell sheet-cell--field">
+          <input
+            id="hash-name"
+            className="input"
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Content Creation"
+            aria-label="Group name"
+          />
+        </div>
       </div>
-      <div className="field">
-        <label className="field__label" htmlFor="hash-tags">
-          Tags
-        </label>
-        <textarea
-          id="hash-tags"
-          className="input hash-sheet__tags"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="contentcreator createcontent smallbusiness: spaces, commas or new lines all work"
-        />
-        {count === 0 ? (
+      <span className="sheet-section-label">Tags</span>
+      <div className="sheet-group">
+        <div className="sheet-cell sheet-cell--field">
+          <textarea
+            id="hash-tags"
+            className="input hash-sheet__tags"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="contentcreator createcontent smallbusiness: spaces, commas or new lines all work"
+            aria-label="Tags"
+          />
+        </div>
+      </div>
+      {count === 0 ? (
+        <p className="muted hash-sheet__hint">
+          The # is added for you on save.
+        </p>
+      ) : (
+        <>
           <p className="muted hash-sheet__hint">
-            The # is added for you on save.
+            {count} tag{count === 1 ? "" : "s"}, saved as:
+            {count > 30 && (
+              <span className="hash-sheet__warn">
+                {" "}
+                Instagram allows up to 30 per post.
+              </span>
+            )}
           </p>
-        ) : (
-          <>
-            <p className="muted hash-sheet__hint">
-              {count} tag{count === 1 ? "" : "s"}, saved as:
-              {count > 30 && (
-                <span className="hash-sheet__warn">
-                  {" "}
-                  Instagram allows up to 30 per post.
-                </span>
-              )}
-            </p>
-            <div className="hash-sheet__preview">
-              {previewTags.map((t, i) => (
-                <span key={`${t}-${i}`} className="hash-tag">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-      <button
-        className="btn btn--primary"
-        disabled={!name.trim()}
-        onClick={() => onSave({ name: name.trim(), tags: normalizeTags(tags) })}
-      >
-        {group ? "Save" : "Add group"}
-      </button>
+          <div className="hash-sheet__preview">
+            {previewTags.map((t, i) => (
+              <span key={`${t}-${i}`} className="hash-tag">
+                {t}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
     </BottomSheet>
   );
 }
