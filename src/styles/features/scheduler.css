@@ -578,47 +578,53 @@ textarea.postsheet-ta--sm {
 }
 
 /* ---- PostViewSheet — the read-only preview opened first, everywhere a
-   post is clicked (see usePostEditor.ts). Same scrim-photo recipe as the
-   Monthly Plan / Feed Preview tiles (.mon-card--photo / .feed-tile--photo)
-   so a post's "card" look stays consistent across the whole app. ---- */
-.postview-hero {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 16px;
-  overflow: hidden;
+   post is clicked (see usePostEditor.ts). ---- */
+/* The photo stage reuses PostSheet's own .postsheet-photostage (blurred,
+   scaled backdrop copy + a foreground copy at object-fit: contain) rather
+   than a fixed-aspect crop — confirmed live 2026-07-17 that posts are
+   square (feed), vertical (Reels/Stories) and horizontal, and a fixed crop
+   butchers whichever shapes aren't that one ratio. object-fit: contain
+   means the WHOLE photo is always visible regardless of its shape. */
+.postview-photostage {
+  margin-bottom: var(--sp-4);
+}
+.postview-photostage__pillar {
+  position: absolute;
+  z-index: 2;
+  left: 12px;
+  bottom: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+/* No photo at all: a plain colored swatch (pillar color / custom cover)
+   standing in for the missing image, same fill logic as every other
+   pillar-colored card in the app. */
+.postview-swatch {
   display: flex;
   align-items: flex-end;
-  padding: var(--sp-3);
-}
-.postview-hero__img {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.postview-hero__pillar {
-  position: relative;
+  height: 120px;
+  border-radius: 16px;
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-4);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.postview-hero__pillar--photo {
-  z-index: 1;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-}
-.postview-hero__pillar--photo::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: -8px -10px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 100%);
+.postview-titlerow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 6px;
 }
 .postview-idea {
-  margin: var(--sp-4) 0 6px;
+  margin: 0;
   font-size: 19px;
   font-weight: 800;
   letter-spacing: -0.01em;
@@ -655,4 +661,48 @@ textarea.postsheet-ta--sm {
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+.postview-field + .postview-field {
+  margin-top: var(--sp-4);
+}
+.postview-field__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 6px 14px;
+}
+.postview-field__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+/* Small icon-only copy trigger, reused for the title and every field —
+   confirmed live 2026-07-17: proofreading one piece often means copying
+   just that piece to fix elsewhere, not the whole combined post text. */
+.postview-copybtn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  margin-right: 14px;
+  transition: background 0.12s var(--ease), color 0.12s var(--ease), transform 0.12s var(--ease);
+}
+.postview-copybtn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.postview-copybtn:active {
+  transform: scale(0.9);
+}
+.postview-titlerow .postview-copybtn {
+  margin-right: 0;
 }

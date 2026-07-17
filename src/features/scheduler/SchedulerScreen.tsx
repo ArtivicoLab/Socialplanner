@@ -31,7 +31,7 @@ import {
   type PostFormat,
   type PostStatus,
 } from "../../lib/types";
-import { PostSheet } from "./PostSheet";
+import { openPostEditor } from "../../stores/usePostEditor";
 
 type SortDir = "asc" | "desc";
 // "Click any column header to filter or sort" from the spreadsheet, adapted to
@@ -231,7 +231,7 @@ function SchedRow({
 }
 
 export function SchedulerScreen() {
-  const { items, add, update, remove } = usePosts();
+  const { items, update } = usePosts();
   const groups = useHashtagGroups((s) => s.items);
   const platforms = usePlatforms((s) => s.items);
   const { categories, goals } = useSettings();
@@ -253,9 +253,6 @@ export function SchedulerScreen() {
     setVisibleLimit(PAGE_SIZE);
   }, [q, status, pillar, goal, fmt, platform, sortKey, sort]);
 
-  const [open, setOpen] = useState(false);
-  const [edit, setEdit] = useState<Post | null>(null);
-  const [prefillDate, setPrefillDate] = useState("");
   const [copiedId, setCopiedId] = useState("");
   const copyTimer = useRef<number>();
   useEffect(() => () => window.clearTimeout(copyTimer.current), []);
@@ -263,8 +260,13 @@ export function SchedulerScreen() {
   const today = todayISO();
   const stats = planStats(items, today);
 
-  // Deep links: #/scheduler?post=<id> opens that post's editor;
-  // #/scheduler?new=1&date=yyyy-mm-dd opens a prefilled new-post editor.
+  // Deep links: #/scheduler?post=<id> opens that post (view-first, same as
+  // clicking it anywhere else in the app); #/scheduler?new=1&date=yyyy-mm-dd
+  // opens a prefilled new-post editor. Routes through the shared, globally
+  // mounted post editor (stores/usePostEditor.ts) — Scheduler used to render
+  // its own separate local <PostSheet> instance here, which (like Calendar's
+  // old one) meant it never got the read-only view step added 2026-07-17;
+  // migrated the same way.
   const handledQuery = useRef(false);
   useEffect(() => {
     if (handledQuery.current) return;
@@ -278,13 +280,9 @@ export function SchedulerScreen() {
     if (pid) {
       const p = items.find((x) => x.id === pid);
       if (!p) return; // wait for hydration; retries when items change
-      setEdit(p);
-      setPrefillDate("");
-      setOpen(true);
+      openPostEditor(p);
     } else {
-      setEdit(null);
-      setPrefillDate(query.get("date") ?? "");
-      setOpen(true);
+      openPostEditor(null, query.get("date") ?? "");
     }
     handledQuery.current = true;
     window.history.replaceState(null, "", "#/scheduler");
@@ -454,16 +452,10 @@ export function SchedulerScreen() {
   }
 
   function openNew() {
-    setEdit(null);
-    setPrefillDate("");
-    setOpen(true);
+    openPostEditor(null);
   }
 
-  function openPost(p: Post) {
-    setEdit(p);
-    setPrefillDate("");
-    setOpen(true);
-  }
+  const openPost = openPostEditor;
 
   const filtersOn =
     status !== "all" ||
@@ -736,27 +728,6 @@ export function SchedulerScreen() {
       <button className="fab" data-tour="sched-fab" aria-label="Plan a new post" onClick={openNew}>
         <IconPlus />
       </button>
-
-      <PostSheet
-        open={open}
-        post={edit}
-        prefillDate={prefillDate}
-        onClose={() => setOpen(false)}
-        onSave={(patch) => {
-          setOpen(false);
-          if (edit) { update(edit.id, patch); return undefined; }
-          return add(patch);
-        }}
-        onDelete={
-          edit
-            ? () => {
-                remove(edit.id);
-                void useLocalImages.getState().remove(edit.id);
-                setOpen(false);
-              }
-            : undefined
-        }
-      />
     </>
   );
 }

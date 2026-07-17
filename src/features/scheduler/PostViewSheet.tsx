@@ -7,10 +7,13 @@
 // than plain text, and every tap risked an accidental edit. Reuses the exact
 // sheet-group/sheet-cell layout PostSheet's edit form already uses, so
 // switching between the two feels like the same surface, not two different
-// screens.
+// screens. Also reuses PostSheet's own blurred-backdrop photo stage (not a
+// fixed-aspect crop) — posts here are square (feed), vertical (Reels/
+// Stories) and horizontal, and a fixed crop would butcher whichever shapes
+// aren't that one ratio.
 import { useRef, useState } from "react";
 import { BottomSheet } from "../../components/BottomSheet";
-import { PostPhoto } from "../../components/PostPhoto";
+import { useObjectUrl } from "../../components/PostPhoto";
 import { IconCheck, IconCopy } from "../../components/icons";
 import { useLocalImages } from "../../stores/localImages";
 import { useHashtagGroups } from "../../stores/v2";
@@ -31,24 +34,48 @@ interface Props {
   onEdit: () => void;
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+/** A labeled block of read-only text with its own copy button — every field
+ *  (title, hook, caption, CTA, hashtags) gets one, confirmed live
+ *  2026-07-17, since proofreading one piece often means copying just that
+ *  piece out to fix elsewhere, not the whole combined post text. */
+function Field({
+  label,
+  value,
+  copied,
+  onCopy,
+}: {
+  label: string;
+  value: string;
+  copied: boolean;
+  onCopy: () => void;
+}) {
   if (!value.trim()) return null;
   return (
-    <>
-      <span className="sheet-section-label">{label}</span>
+    <div className="postview-field">
+      <div className="postview-field__head">
+        <span className="postview-field__label">{label}</span>
+        <button
+          className="postview-copybtn"
+          aria-label={`Copy ${label.toLowerCase()}`}
+          onClick={onCopy}
+        >
+          {copied ? <IconCheck size={13} /> : <IconCopy size={13} />}
+        </button>
+      </div>
       <div className="sheet-group">
         <div className="sheet-cell">
           <p className="postview-text">{value}</p>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
 export function PostViewSheet({ open, post, onClose, onEdit }: Props) {
   const groups = useHashtagGroups((s) => s.items);
-  const hasLocal = useLocalImages((s) => (post ? !!s.map[post.id] : false));
-  const [copied, setCopied] = useState(false);
+  const blob = useLocalImages((s) => (post ? s.map[post.id] : undefined));
+  const objectUrl = useObjectUrl(blob);
+  const [copiedField, setCopiedField] = useState("");
   const copyTimer = useRef<number>();
 
   // View mode only ever applies to an EXISTING post — creating new goes
@@ -58,33 +85,45 @@ export function PostViewSheet({ open, post, onClose, onEdit }: Props) {
   if (!post) return null;
 
   const groupTags = groups.find((g) => g.id === post.hashtagGroupId)?.tags ?? "";
-  const text = combinedPostText(post, groupTags);
+  const combined = combinedPostText(post, groupTags);
   const allTags = [groupTags.trim(), post.hashtags.trim()].filter(Boolean).join(" ");
-  const hasPhoto = hasLocal || !!post.image;
+  const photoSrc = objectUrl || post.image;
+  const hasPhoto = !!photoSrc;
   const fill = post.cover || categoryColor(post.pillar);
 
-  function copy() {
-    void navigator.clipboard?.writeText(text).catch(() => {});
-    setCopied(true);
+  function copyValue(field: string, value: string) {
+    void navigator.clipboard?.writeText(value).catch(() => {});
+    setCopiedField(field);
     window.clearTimeout(copyTimer.current);
-    copyTimer.current = window.setTimeout(() => setCopied(false), 1400);
+    copyTimer.current = window.setTimeout(() => setCopiedField(""), 1400);
   }
 
   return (
     <BottomSheet open={open} title="Post" onClose={onClose} action={{ label: "Edit", onClick: onEdit }}>
-      <div className="postview-hero" style={{ background: fill }}>
-        {hasPhoto && (
-          <PostPhoto postId={post.id} fallbackUrl={post.image} alt={post.idea} className="postview-hero__img" />
-        )}
-        <span
-          className={`postview-hero__pillar${hasPhoto ? " postview-hero__pillar--photo" : ""}`}
-          style={{ color: hasPhoto ? undefined : swatchTextColor(fill) }}
-        >
+      {hasPhoto ? (
+        <div className="postsheet-photostage postview-photostage">
+          <img className="postsheet-photostage__blur" src={photoSrc} alt="" aria-hidden />
+          <img className="postsheet-photostage__img" src={photoSrc} alt={post.idea || "Post photo"} />
+          <span className="postview-photostage__pillar">{post.pillar || "No pillar"}</span>
+        </div>
+      ) : (
+        <div className="postview-swatch" style={{ background: fill, color: swatchTextColor(fill) }}>
           {post.pillar || "No pillar"}
-        </span>
-      </div>
+        </div>
+      )}
 
-      <h2 className="postview-idea">{post.idea || "Untitled post"}</h2>
+      <div className="postview-titlerow">
+        <h2 className="postview-idea">{post.idea || "Untitled post"}</h2>
+        {post.idea && (
+          <button
+            className="postview-copybtn"
+            aria-label="Copy title"
+            onClick={() => copyValue("Title", post.idea)}
+          >
+            {copiedField === "Title" ? <IconCheck size={13} /> : <IconCopy size={13} />}
+          </button>
+        )}
+      </div>
       <div className="postview-meta">
         <span
           className="postview-status"
@@ -106,15 +145,15 @@ export function PostViewSheet({ open, post, onClose, onEdit }: Props) {
         </div>
       )}
 
-      <Field label="Hook" value={post.hook} />
-      <Field label="Caption" value={post.caption} />
-      <Field label="Call to action" value={post.cta} />
-      <Field label="Hashtags" value={allTags} />
-      <Field label="Notes" value={post.notes} />
+      <Field label="Hook" value={post.hook} copied={copiedField === "Hook"} onCopy={() => copyValue("Hook", post.hook)} />
+      <Field label="Caption" value={post.caption} copied={copiedField === "Caption"} onCopy={() => copyValue("Caption", post.caption)} />
+      <Field label="Call to action" value={post.cta} copied={copiedField === "Call to action"} onCopy={() => copyValue("Call to action", post.cta)} />
+      <Field label="Hashtags" value={allTags} copied={copiedField === "Hashtags"} onCopy={() => copyValue("Hashtags", allTags)} />
+      <Field label="Notes" value={post.notes} copied={copiedField === "Notes"} onCopy={() => copyValue("Notes", post.notes)} />
 
-      {text && (
-        <button className="btn btn--ghost btn--stack" onClick={copy}>
-          {copied ? <><IconCheck size={15} /> Copied</> : <><IconCopy size={15} /> Copy caption</>}
+      {combined && (
+        <button className="btn btn--ghost btn--stack" onClick={() => copyValue("All", combined)}>
+          {copiedField === "All" ? <><IconCheck size={15} /> Copied everything</> : <><IconCopy size={15} /> Copy hook + caption + CTA + hashtags</>}
         </button>
       )}
     </BottomSheet>

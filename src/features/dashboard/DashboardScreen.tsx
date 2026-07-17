@@ -170,8 +170,17 @@ export function DashboardScreen() {
             <div className="dash-today__head">
               <span className="dash-today__title">Today</span>
               <span className="dash-today__count">
-                {todaysPosts.length > 0 &&
-                  `${todaysPosts.length} post${todaysPosts.length > 1 ? "s" : ""}`}
+                {todaysPosts.length > 0 && (
+                  <>
+                    {todaysPosts.length} post{todaysPosts.length > 1 ? "s" : ""}
+                    {/* Only spell out the split once it's not just "all of today's
+                        posts" — avoids "2 posts · 2 to publish" repeating itself
+                        when nothing's published yet (the common case). */}
+                    {stats.scheduledToday > 0 && stats.scheduledToday < todaysPosts.length &&
+                      ` · ${stats.scheduledToday} to publish`}
+                    {stats.scheduledToday === 0 && " · all published"}
+                  </>
+                )}
               </span>
             </div>
             {todaysPosts.length === 0 ? (
