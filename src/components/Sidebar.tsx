@@ -7,6 +7,7 @@ import { IconCompass, IconHeart, IconPlus } from "./icons";
 import { useSync } from "../stores/useSync";
 import { useSettings } from "../stores/useSettings";
 import { HIDE_DEMO_CHROME, useDemo } from "../lib/demo";
+import { useDueToday } from "../lib/useDueToday";
 import { APP_VERSION, BUILD_SHA } from "../lib/config";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -19,6 +20,7 @@ export function Sidebar({ active, onCoachTour }: { active: Route; onCoachTour: (
   const { status, connected, needsReauth, busy, tapToRetry } = useSync();
   const { hiddenRoutes } = useSettings();
   const demo = useDemo((s) => s.demo);
+  const dueToday = useDueToday();
   // Stuck sync must always have a manual escape hatch, not just the specific
   // reauth case — a plain "offline" (rate limit, blip, whatever) previously
   // had no click affordance at all, which read as "pressing it does nothing."
@@ -64,6 +66,9 @@ export function Sidebar({ active, onCoachTour }: { active: Route; onCoachTour: (
                   <Icon size={17} />
                 </span>
                 {label}
+                {route === "dashboard" && dueToday > 0 && (
+                  <span className="navbadge navbadge--inline">{dueToday}</span>
+                )}
               </button>
             ))}
           </div>

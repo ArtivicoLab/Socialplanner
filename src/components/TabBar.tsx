@@ -10,6 +10,7 @@ import { navigate, type Route } from "../router";
 import { ALL_NAV_ITEMS } from "../nav";
 import { IconGrid, IconMinus, IconPlus } from "./icons";
 import { useSettings } from "../stores/useSettings";
+import { useDueToday } from "../lib/useDueToday";
 
 // Shorter tab-bar-only label for the dashboard; every other tab keeps its
 // nav.tsx label.
@@ -20,6 +21,7 @@ const MOVE_CANCEL_PX = 8;
 
 export function TabBar({ active }: { active: Route }) {
   const { tabBarRoutes, update } = useSettings();
+  const dueToday = useDueToday();
   const [editing, setEditing] = useState(false);
   const [dragRoute, setDragRoute] = useState<string | null>(null);
 
@@ -148,6 +150,7 @@ export function TabBar({ active }: { active: Route }) {
         )}
         <span className="tabbar__iconwrap">
           <Icon />
+          {route === "dashboard" && dueToday > 0 && <span className="navbadge">{dueToday}</span>}
         </span>
         <span>{LABEL_OVERRIDE[route] ?? label}</span>
       </button>

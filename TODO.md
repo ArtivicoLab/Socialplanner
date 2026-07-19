@@ -20,6 +20,17 @@
       Tracker, Settings, Privacy (built by parallel agents — see git diff).
 - [x] Coach tour steps retargeted to the new screens.
 - [x] Tests: schema roundtrip + combinedPostText, merge, tombstones.
+- [x] Nav icon badges (2026-07-19), matching TrackerA's `navbadge` pattern:
+      Dashboard shows a live "posts due today" count in both `Sidebar.tsx`
+      (inline, end of row — `navbadge--inline`) and `TabBar.tsx` (icon-corner
+      dot — `navbadge`), reusing the existing `useDueToday()`/`TabNotifier`
+      count so it can't drift from the browser-tab badge or Dashboard's own
+      "Today" section. Unlike TrackerA (which splits its count across
+      Tasks/Goals/Finances, each with its own share), TrackerC only has one
+      due-today category — scheduled posts — so only Dashboard is badged;
+      deliberately did NOT port `DueBadge.tsx` on top of that, since
+      Dashboard's own "Today" column already shows this exact number
+      prominently and a corner badge there too would just be redundant.
 
 ## Top priority
 - [ ] **Connect Google Sheets for real** (owner step): OAuth client id in
